@@ -6,7 +6,7 @@
 #define  GREEN_LED     21
 
 // ID number of the Board
-#define  ID            1
+#define  ID            4
 
 /* Max and min score,
   When ball will hit, 

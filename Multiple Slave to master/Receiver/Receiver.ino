@@ -16,9 +16,10 @@ struct_message myData;
 struct_message board1;
 struct_message board2;
 struct_message board3;
+struct_message board4;
 
 // Create an array with all the structures
-struct_message boardsStruct[3] = {board1, board2, board3};
+struct_message boardsStruct[4] = {board1, board2, board3, board4};
 
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) {
@@ -57,12 +58,22 @@ void setup() {
  
 void loop() {
   // Acess the variables for each board
+
+  /*Board1 Data */
   int board1X = boardsStruct[0].flag;
   int board1Y = boardsStruct[0].Score;
-  /*int board2X = boardsStruct[1].flag;
+  
+  /*Board2 Data*/
+  int board2X = boardsStruct[1].flag;
   int board2Y = boardsStruct[1].Score;
+  
+  /*Board3 Data*/
   int board3X = boardsStruct[2].flag;
-  int board3Y = boardsStruct[2].Score;*/
+  int board3Y = boardsStruct[2].Score;
+
+  /*Board4 Data*/
+  int board4X = boardsStruct[3].flag;
+  int board4Y = boardsStruct[3].Score;
 
   delay(500);  
 }
