@@ -9,6 +9,9 @@ typedef struct struct_message {
   int Score;
 }struct_message;
 
+/* Initial Score value */
+int Final_Score = 100;
+
 // Create a struct_message called myData
 struct_message myData;
 
@@ -34,7 +37,21 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
   boardsStruct[myData.id-1].flag = myData.flag;
   boardsStruct[myData.id-1].Score = myData.Score;
   Serial.printf("flag value: %d \n", boardsStruct[myData.id-1].flag);
-  Serial.printf("Score value: %d \n", boardsStruct[myData.id-1].Score);
+  Serial.printf("Score value Received: %d \n", boardsStruct[myData.id-1].Score);
+
+  if( (Final_Score - boardsStruct[myData.id-1].Score ) >= 0 ) 
+  {
+    Final_Score = Final_Score - boardsStruct[myData.id-1].Score;
+  }
+  else
+  {
+    Final_Score = 0;
+  }
+
+  Serial.printf("Updated Score Value: %d \n", Final_Score);
+  
+  /* Send new data to the main Admin*/
+    
   Serial.println();
 }
  

@@ -16,10 +16,10 @@
     hit at FULL SPEED.
 */
 #define MIN_SCORE     5
-#define MAX_SCORE     10
+#define MAX_SCORE     20
 
 /* Replace with Receiver's MAC Address */
-uint8_t broadcastAddress[] = {0x78, 0x21, 0x84, 0xC7, 0x05, 0x38};
+uint8_t broadcastAddress[] = {0x78, 0x21, 0x84, 0xC6, 0xFD, 0xE8};
 
 /*
   Explaining Structures :
@@ -102,7 +102,9 @@ void Target_hit()
 
 void loop() {
 
-  // ID 1 for target 1
+  digitalWrite(GREEN_LED, HIGH);
+
+  // ID 2 for target 2
   myData.id = ID;
   myData.flag = 1;
   myData.Score = MAX_SCORE;

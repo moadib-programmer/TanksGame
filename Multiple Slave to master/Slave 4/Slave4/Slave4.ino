@@ -19,7 +19,7 @@
 #define MAX_SCORE     10
 
 /* Replace with Receiver's MAC Address */
-uint8_t broadcastAddress[] = {0x78, 0x21, 0x84, 0xC7, 0x05, 0x38};
+uint8_t broadcastAddress[] = {0x78, 0x21, 0x84, 0xC6, 0xFD, 0xE8};
 
 /*
   Explaining Structures :
