@@ -18,8 +18,14 @@
 #define MIN_SCORE     5
 #define MAX_SCORE     10
 
-/* Replace with Receiver's MAC Address */
-uint8_t broadcastAddress[] = {0x78, 0x21, 0x84, 0xC6, 0xFD, 0xE8};
+/* Replace with Receiver's MAC Address 
+brain 1:
+78:21:84:C7:05:38
+
+brain 2:
+70:B8:F6:5B:F8:B8
+*/
+uint8_t broadcastAddress[] = {0x70, 0xB8, 0xF6, 0x5B, 0xF8, 0xB8};
 
 /*
   Explaining Structures :

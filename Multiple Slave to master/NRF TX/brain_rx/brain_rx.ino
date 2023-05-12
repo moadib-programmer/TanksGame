@@ -1,38 +1,79 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
- 
+
 RF24 radio(4, 5); 
 const uint64_t address = 0xF0F0F0F0E1LL;
  
-struct MyData 
+
+/************* Structure to send data to Brain *************/
+struct StructureOfTeam
+{
+  String team_name;
+  int health;
+  unsigned char go = 0;
+  unsigned char time = 0;
+};
+
+StructureOfTeam TeamData;
+ 
+/************* Structure to receive data from Admin *************/
+struct StructureOfBrain
 {
   int counter;
-  float temperature;
-  float humidity;
-  float altitude;
-  float pressure;
+  String slave_id;
+  int health;
 };
-MyData data;
+
+StructureOfBrain BrainData;
  
 void setup() 
 {
   Serial.begin(115200);
   radio.begin();
   
+  Serial.println("Transmitter started....");
+  radio.openWritingPipe(address); //Setting the address where we will send the data
+  radio.setPALevel(RF24_PA_MIN);  //You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
+  radio.stopListening();          //This sets the module as transmitter
  
+ /*
   Serial.println("Receiver Started....");
  
   radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
   radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
   radio.startListening();              //This sets the module as receiver
+*/
+    Serial.println("*** Sending First data to Brain: 01 ******");
+    delay(500);
+    Serial.println();
+  
+  /* Send Team and tank name with space*/
+    TeamData.team_name = "DAVID BLUE";
+    TeamData.health = 150;
+    TeamData.go = 0;
+    TeamData.time = 2;
+
+    radio.write(&TeamData, sizeof(StructureOfTeam));
+    
+    Serial.println("Data Packet Sent");
+    Serial.println("");
+
+    delay(1000);
+    
+    Serial.println("Receiver Started....");
+ 
+    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
+    radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
+    radio.startListening();              //This sets the module as receiver
+
 }
  
 int recvData()
 {
   if ( radio.available() ) 
   {
-    radio.read(&data, sizeof(MyData));
+    radio.read(&BrainData, sizeof(StructureOfBrain));
     return 1;
     }
     return 0;
@@ -41,31 +82,20 @@ int recvData()
  
 void loop()
 {
+
   if(recvData())
   {
  
-  Serial.println("Data Received:");
   Serial.print("Packet No. = ");
-  Serial.println(data.counter);
+  Serial.println(BrainData.counter);
   
-  Serial.print("Temperature = ");
-  Serial.print(data.temperature);
-  Serial.println("*C");
+  Serial.print("Health = ");
+  Serial.print(BrainData.health);
  
-  Serial.print("Pressure = ");
-  Serial.print(data.pressure);
-  Serial.println("hPa");
- 
-  Serial.print("Approx. Altitude = ");
-  Serial.print(data.altitude);
-  Serial.println("m");
- 
-  Serial.print("Humidity = ");
-  Serial.print(data.humidity);
-  Serial.println("%");
+  Serial.print("SlaveID = ");
+  Serial.print(BrainData.slave_id);
  
   Serial.println();
-
 
   }
 
