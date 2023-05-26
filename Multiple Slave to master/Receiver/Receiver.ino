@@ -5,11 +5,19 @@
 #include <nRF24L01.h>
 #include <RF24.h>
  
+
+#define ID  (1U)
 int GreenLed = 27;
+unsigned long StartTime = 0;
+unsigned long TotalTime = 0;
+unsigned long TimeLeft = 0;
 
 RF24 radio(4, 5); 
 const uint64_t address = 0xF0F0F0F0E1LL;
 int counter = 0;
+
+String TankName = "";
+String TeamName = "";
  
 float temperature;
 float humidity;
@@ -23,6 +31,7 @@ struct StructureOfTeam
   int health;
   unsigned char go = 0;
   unsigned char time = 0;
+  unsigned char id = 0;
 };
 
 StructureOfTeam TeamData;
@@ -87,6 +96,11 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
   }
 
   Serial.printf("Updated Score Value: %d \n", Final_Score);
+  SendNextionCommand("health", String(Final_Score));
+  SendNextionCommand("health", String(Final_Score));
+
+  SendNextionCommand("t5", String("Side HIT"));
+  SendNextionCommand("t5", String("Side HIT"));
   
   /* Send new data to the main Admin*/
   BrainData.counter = counter;
@@ -129,7 +143,7 @@ int recvData()
 
 void setup() {
   //Initialize Serial Monitor
-  Serial.begin(115200);
+  Serial.begin(9600);
   
   //Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
@@ -156,42 +170,120 @@ void setup() {
 
 }
  
+void SendNextionCommand(String object, String msg)
+{
+  String command = "";
+  command = object+".txt=\""+String(msg)+"\"";
+  Serial.print(command);
+
+  Serial.write(0xff);
+  Serial.write(0xff);
+  Serial.write(0xff);
+
+  delay(50);
+}
+
 void loop() {
-  while(1)
+  while(TeamData.go == 0)
   {
     if(recvData())
     {
-      Serial.print("Team Name = ");
-      Serial.println(TeamData.team_name.substring(0,TeamData.team_name.indexOf(" ")));
+      if(TeamData.go == 0)
+      {
+        Serial.print("Team Name = ");
+        TeamName = TeamData.team_name.substring(0,TeamData.team_name.indexOf(" "));
+        Serial.println(TeamName);
 
-      Serial.print("Tank Name = ");
-      Serial.println(TeamData.team_name.substring(TeamData.team_name.indexOf(" "),TeamData.team_name.length()));
-      
-      Serial.print("Health Given = ");
-      Serial.println(TeamData.health);
+        Serial.print("Tank Name = ");
+        TankName = TeamData.team_name.substring(TeamData.team_name.indexOf(" "),TeamData.team_name.length());
+        Serial.println(TankName);
+        
+        Serial.print("Health Given = ");
+        Serial.println(TeamData.health);
 
-      /* Setting Final score equal to health */
-      Final_Score = TeamData.health;
+        /* Setting Final score equal to health */
+        Final_Score = TeamData.health;
 
-      Serial.print("GO = ");
-      Serial.println(TeamData.go);
+        Serial.print("GO = ");
+        Serial.println(TeamData.go);
 
-      Serial.print("Time in Minutes = ");
-      Serial.println(TeamData.time);
+        Serial.print("Time in Seconds = ");
+        TotalTime = TeamData.time * 60;
+        Serial.println(TotalTime);
 
-      Serial.println();
-      
-      Serial.println("Turning ON GREEN");
-      digitalWrite(GreenLed, HIGH);
+        Serial.println();
+    
+        Serial.println("Turning ON GREEN");
+        
 
-      radio.openWritingPipe(address); //Setting the address where we will send the data
-      radio.setPALevel(RF24_PA_MIN);  //You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
-      radio.stopListening();          //This sets the module as transmitter
-      break;
+        for (int i = 0; i <= 2; i++)
+        { 
+          digitalWrite(GreenLed, HIGH);
+          delay(100);
+          digitalWrite(GreenLed, LOW);
+          delay(100);
+        }
+
+        /* Updating data on Nextion HMI */
+        SendNextionCommand("time", String(TotalTime));
+        SendNextionCommand("time", String(TotalTime));
+        SendNextionCommand("health", String(TeamData.health));
+        SendNextionCommand("team", String(TeamName));
+        SendNextionCommand("tank", String(TankName));
+        SendNextionCommand("t5", String("Neutral"));
+      }
+
+      if(TeamData.go)
+      {
+        SendNextionCommand("start", String("3"));
+        delay(1000);
+        SendNextionCommand("start", String("2"));
+        delay(1000);
+        SendNextionCommand("start", String("1"));
+        delay(1000);       
+
+        SendNextionCommand("start", String("START"));
+        delay(2000);
+        
+        SendNextionCommand("start", String(" "));
+        delay(1000);          
+
+        digitalWrite(GreenLed, HIGH);
+
+        radio.openWritingPipe(address); //Setting the address where we will send the data
+        radio.setPALevel(RF24_PA_MIN);  //You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
+        radio.stopListening();          //This sets the module as transmitter
+
+        /*TODO: Add millisecond part and then update it under void Loop */
+        StartTime = millis();
+        Serial.println("Start Time : "+ String(StartTime));
+
+        break;
+      }
     }
   }
 
+
+  if( ((millis() - StartTime) / 1000) <= TotalTime )
+  {
+    TimeLeft =  TotalTime - ((millis() - StartTime) / 1000);
+    Serial.println("");
+    SendNextionCommand("time", String(TimeLeft));
+    SendNextionCommand("time", String(TimeLeft));
+    delay(100);
+  }
+  else
+  {
+    Serial.printf("\nTime left : %d", 0);
+
+    SendNextionCommand("time", String(0)); 
+    SendNextionCommand("time", String(0)); 
+    SendNextionCommand("start", String("Game Ended")); 
+  }
+
   // Acess the variables for each board
+
+  
 
   /*Board1 Data */
   int board1X = boardsStruct[0].flag;

@@ -4,6 +4,8 @@
 
 RF24 radio(4, 5); 
 const uint64_t address = 0xF0F0F0F0E1LL;
+
+#define BUTTONPIN 12
  
 
 /************* Structure to send data to Brain *************/
@@ -13,6 +15,7 @@ struct StructureOfTeam
   int health;
   unsigned char go = 0;
   unsigned char time = 0;
+  unsigned char id = 0;
 };
 
 StructureOfTeam TeamData;
@@ -29,8 +32,10 @@ StructureOfBrain BrainData;
  
 void setup() 
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
   radio.begin();
+
+  pinMode(BUTTONPIN, INPUT);
   
   Serial.println("Transmitter started....");
   radio.openWritingPipe(address); //Setting the address where we will send the data
@@ -52,9 +57,25 @@ void setup()
     TeamData.team_name = "DAVID BLUE";
     TeamData.health = 150;
     TeamData.go = 0;
-    TeamData.time = 2;
+    TeamData.time = 5;
 
     radio.write(&TeamData, sizeof(StructureOfTeam));
+    
+    while(1)
+    {
+      if(digitalRead(BUTTONPIN) == 1)
+      {
+        
+        break;
+      }
+    } 
+
+    TeamData.go = 1;
+
+    /* Starting the game */
+    Serial.println(" >>>> Starting the Game Now: <<<< ");
+    radio.write(&TeamData, sizeof(StructureOfTeam));
+
     
     Serial.println("Data Packet Sent");
     Serial.println("");
