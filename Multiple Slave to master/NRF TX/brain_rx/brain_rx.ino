@@ -5,7 +5,9 @@
 RF24 radio(4, 5); 
 const uint64_t address = 0xF0F0F0F0E1LL;
 
-#define BUTTONPIN 12
+#define BUTTONPIN      (12U)
+#define NUM_OF_BRAINS  (1U)
+
  
 
 /************* Structure to send data to Brain *************/
@@ -24,7 +26,7 @@ StructureOfTeam TeamData;
 struct StructureOfBrain
 {
   int counter;
-  String slave_id;
+  int brain_id;
   int health;
 };
 
@@ -52,15 +54,23 @@ void setup()
     Serial.println("*** Sending First data to Brain: 01 ******");
     delay(500);
     Serial.println();
-  
-  /* Send Team and tank name with space*/
-    TeamData.team_name = "DAVID BLUE";
-    TeamData.health = 150;
-    TeamData.go = 0;
-    TeamData.time = 5;
 
-    radio.write(&TeamData, sizeof(StructureOfTeam));
-    
+
+      /* TODO: Iterate the ID's here and send Team Commands */
+    for(int i = 1; i <= NUM_OF_BRAINS; i++)
+    {
+    /* Send Team and tank name with space; for Brain 1*/
+      TeamData.team_name = "DAVID BLUE";
+      TeamData.health = 150;
+      TeamData.go = 0;
+      TeamData.time = 5;
+      TeamData.id = i;
+
+      radio.write(&TeamData, sizeof(StructureOfTeam));
+
+      delay(500);
+    }
+        
     while(1)
     {
       if(digitalRead(BUTTONPIN) == 1)
@@ -70,17 +80,23 @@ void setup()
       }
     } 
 
-    TeamData.go = 1;
+    /* TODO: Iterate the ID's here and send Go commands*/
+    for(int i = 1; i <= NUM_OF_BRAINS; i++)
+    {
+      TeamData.go = 1;
+      
+      /* ID of slaves */
+      TeamData.id = i; 
 
-    /* Starting the game */
-    Serial.println(" >>>> Starting the Game Now: <<<< ");
-    radio.write(&TeamData, sizeof(StructureOfTeam));
+      /* Starting the game */
+      Serial.println(" >>>> Starting the Game Now: <<<< ");
+      radio.write(&TeamData, sizeof(StructureOfTeam));
 
-    
-    Serial.println("Data Packet Sent");
-    Serial.println("");
+      Serial.println("Data Packet Sent");
+      Serial.println("");
 
-    delay(1000);
+      delay(1000);
+    }
     
     Serial.println("Receiver Started....");
  
@@ -113,8 +129,8 @@ void loop()
   Serial.print("Health = ");
   Serial.print(BrainData.health);
  
-  Serial.print("SlaveID = ");
-  Serial.print(BrainData.slave_id);
+  Serial.print("Brain ID = ");
+  Serial.print(BrainData.brain_id);
  
   Serial.println();
 

@@ -5,8 +5,9 @@
 #include <nRF24L01.h>
 #include <RF24.h>
  
-
+/* ID of this Brain */
 #define ID  (1U)
+
 int GreenLed = 27;
 unsigned long StartTime = 0;
 unsigned long TotalTime = 0;
@@ -18,11 +19,6 @@ int counter = 0;
 
 String TankName = "";
 String TeamName = "";
- 
-float temperature;
-float humidity;
-float altitude;
-float pressure;
  
 /************* Structure to receive data from Admin *************/
 struct StructureOfTeam
@@ -40,12 +36,11 @@ StructureOfTeam TeamData;
 struct StructureOfBrain
 {
   int counter;
-  String slave_id;
+  int brain_id;
   int health;
 };
 
 StructureOfBrain BrainData;
-
 
 /************* Structure to receive data from Slave *************/
 typedef struct StructureOfTargets 
@@ -105,7 +100,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
   /* Send new data to the main Admin*/
   BrainData.counter = counter;
   BrainData.health = Final_Score;
-  BrainData.slave_id = myData.id;
+  BrainData.brain_id = ID;
   
   Serial.println(" ");
   Serial.print("Packet No. = ");
@@ -114,8 +109,8 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
   Serial.print("Health = ");
   Serial.print(BrainData.health);
  
-  Serial.print("SlaveID = ");
-  Serial.print(BrainData.slave_id);
+  Serial.print("Brain ID = ");
+  Serial.print(BrainData.brain_id);
  
   Serial.println(" ");
   
@@ -188,7 +183,7 @@ void loop() {
   {
     if(recvData())
     {
-      if(TeamData.go == 0)
+      if( (TeamData.go == 0) and (TeamData.id == ID))
       {
         Serial.print("Team Name = ");
         TeamName = TeamData.team_name.substring(0,TeamData.team_name.indexOf(" "));
@@ -233,7 +228,7 @@ void loop() {
         SendNextionCommand("t5", String("Neutral"));
       }
 
-      if(TeamData.go)
+      if((TeamData.go) and (TeamData.id == ID))
       {
         SendNextionCommand("start", String("3"));
         delay(1000);
@@ -266,10 +261,18 @@ void loop() {
 
   if( ((millis() - StartTime) / 1000) <= TotalTime )
   {
+    int minute = 0;
+    int seconds = 0;
+    String countdown = "";
+
     TimeLeft =  TotalTime - ((millis() - StartTime) / 1000);
+    minute = (int) TimeLeft / 60;
+    seconds = TimeLeft - (minute * 60);
+    countdown = String(minute) + " : "+ String(seconds);
+    
     Serial.println("");
-    SendNextionCommand("time", String(TimeLeft));
-    SendNextionCommand("time", String(TimeLeft));
+    SendNextionCommand("time", String(countdown));
+    SendNextionCommand("time", String(countdown));
     delay(100);
   }
   else
