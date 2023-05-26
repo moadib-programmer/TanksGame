@@ -8,6 +8,15 @@
 /* ID of this Brain */
 #define ID  (1U)
 
+/**
+ * @brief HIT Brief
+ * If 
+ * id = 1, front hit
+ * id = 2, side hit
+ * id = 3, back hit
+ * 
+ */
+
 int GreenLed = 27;
 unsigned long StartTime = 0;
 unsigned long TotalTime = 0;
@@ -94,8 +103,26 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
   SendNextionCommand("health", String(Final_Score));
   SendNextionCommand("health", String(Final_Score));
 
-  SendNextionCommand("t5", String("Side HIT"));
-  SendNextionCommand("t5", String("Side HIT"));
+  /********* Send Hit Status **********/
+  switch (myData.id)
+  {
+  case 1:
+    SendNextionCommand("t5", String("FRONT HIT"));
+    SendNextionCommand("t5", String("FRONT HIT"));
+    break;
+  case 2:
+    SendNextionCommand("t5", String("SIDE HIT"));
+    SendNextionCommand("t5", String("SIDE HIT"));
+    break;
+  case 3:
+    SendNextionCommand("t5", String("BACK HIT"));
+    SendNextionCommand("t5", String("BACK HIT"));
+    break;
+  
+  default:
+    break;
+  }
+
   
   /* Send new data to the main Admin*/
   BrainData.counter = counter;
