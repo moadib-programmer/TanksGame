@@ -1,9 +1,13 @@
 #include <esp_now.h>
 #include <WiFi.h>
+#include <Adafruit_NeoPixel.h>
+
+/* LED's on each target would be 8 connected to PIN 15 */
+#define PIN 15
+#define NUM 9
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM,PIN, NEO_GRB + NEO_KHZ800);
 
 #define  BUTTON_PIN    23
-#define  RED_LED       22
-#define  GREEN_LED     21
 
 // ID number of the Board
 #define  ID            2
@@ -18,9 +22,18 @@
 #define MIN_SCORE     5
 #define MAX_SCORE     20
 
-/* Replace with Receiver's MAC Address */
-uint8_t broadcastAddress[] = {0x70, 0xB8, 0xF6, 0x5B, 0xF8, 0xB8};
 
+/* Replace with Receiver's MAC Address 
+brain 1:
+78:21:84:C7:05:38
+
+brain 2:
+70:B8:F6:5B:F8:B8
+*/
+uint8_t broadcastAddress[] = {0x70, 0xB8, 0xF6, 0x5B, 0xF8, 0xB8};
+int Health = 0U;
+
+/******* Structure to send data to the brain ********/
 /*
   Explaining Structures :
       flag -> 1 positive
@@ -35,6 +48,13 @@ typedef struct struct_message {
 // Create a struct_message called myData
 struct_message myData;
 
+/************* Structure to receive data from brain *************/
+typedef struct StructureOfSlaves {
+    int health;       // must be unique for each sender board
+} StructureOfSlaves;
+
+StructureOfSlaves slaveData;
+
 // Create peer interface
 esp_now_peer_info_t peerInfo;
 
@@ -43,10 +63,39 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
+
+// callback function that will be executed when data is received
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+  memcpy(&slaveData, incomingData, sizeof(slaveData));
+  Serial.print("Bytes received: ");
+  Serial.println(len);
+  Serial.print("Health: ");
+  Serial.println(slaveData.health);
+
+  /****************** Setting Neopixel depending on HEALTH *******************/
+  if( (slaveData.health >= 70) and (slaveData.health <= 100) )
+  {
+    /* Setting neopixel to green, if score is between 70 and 100 */
+    setneopixel(0, 255, 0);
+  }
+  else if ( (slaveData.health >= 40) and (slaveData.health <= 69) )
+  {
+    /* Setting neopixel to yellow, if score is between 40 and 69 */
+    setneopixel(255,255,0);
+  }
+  else if ( (slaveData.health >= 0) and (slaveData.health <= 39) )
+  {
+    /* Setting neopixel to yellow, if score is between 40 and 69 */
+    setneopixel(255, 0, 0);
+  }
+
+  Serial.println();
+  delay(50);
+}
  
 void setup() {
   // Init Serial Monitor
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
@@ -60,6 +109,7 @@ void setup() {
   // Once ESPNow is successfully Init, we will register for Send CB to
   // get the status of Trasnmitted packet
   esp_now_register_send_cb(OnDataSent);
+  esp_now_register_recv_cb(OnDataRecv);
   
   // Register peer
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
@@ -73,16 +123,14 @@ void setup() {
     return;
   }
 
-  Serial.println("Setting the directions for the pin");
+  Serial.println("******* Setting the LED to GREEN ********");
   pinMode(BUTTON_PIN,INPUT);
-  pinMode(RED_LED, OUTPUT);
-  pinMode(GREEN_LED, OUTPUT);
+  
+  pixels.begin();
 
-  /* Setting Green LED ON and RED_LED OFF. */
-  digitalWrite(RED_LED, LOW);
-  digitalWrite(GREEN_LED, HIGH);
+  /* Turning ON GREEN */
+  setneopixel(0, 255, 0);
 }
- 
 
 
 void Target_hit()
@@ -92,27 +140,32 @@ void Target_hit()
 
   for (int i = 0; i <= 2; i++)
   {
-    digitalWrite(RED_LED, HIGH);
+    setneopixel(255, 0, 0);
     delay(600);
-    digitalWrite(RED_LED, LOW);
+    setneopixel(0, 0, 0);
     delay(600);
   }
 }
 
+void setneopixel(int r, int g, int b)
+{
+  for(int i=0; i<=NUM; i++)
+  {
+    pixels.setPixelColor(i, pixels.Color(r,g,b));
+    pixels.show();
+  }
+}
 
-void loop() {
-
-  digitalWrite(GREEN_LED, HIGH);
-
+void loop() 
+{
   // ID 2 for target 2
   myData.id = ID;
   myData.flag = 1;
   myData.Score = MAX_SCORE;
 
+  /****** When target is hit ******/
   if(digitalRead(BUTTON_PIN) == 1)
   {
-    digitalWrite(GREEN_LED, LOW);
-
     // Blinking RED LED 3 times
     Target_hit();
 
@@ -123,11 +176,12 @@ void loop() {
     if (result == ESP_OK) 
     {
       Serial.println("Sent Score");
+      Serial.println(" ");
+      Serial.println("Awaiting Score results ");
     }
     else 
     {
       Serial.println("Error sending the data");
     }
   }
-
 }

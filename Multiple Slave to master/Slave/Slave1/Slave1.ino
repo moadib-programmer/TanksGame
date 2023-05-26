@@ -4,12 +4,10 @@
 
 /* LED's on each target would be 8 connected to PIN 15 */
 #define PIN 15
-#define NUM 8
+#define NUM 9
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM,PIN, NEO_GRB + NEO_KHZ800);
 
 #define  BUTTON_PIN    23
-#define  RED_LED       22
-#define  GREEN_LED     21
 
 /**
  * @brief HIT Brief
@@ -38,7 +36,7 @@ brain 2:
 70:B8:F6:5B:F8:B8
 */
 uint8_t broadcastAddress[] = {0x70, 0xB8, 0xF6, 0x5B, 0xF8, 0xB8};
-
+int Health = 0U;
 
 /******* Structure to send data to the brain ********/
 /*
@@ -78,13 +76,31 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   Serial.println(len);
   Serial.print("Health: ");
   Serial.println(slaveData.health);
+
+  /****************** Setting Neopixel depending on HEALTH *******************/
+  if( (slaveData.health >= 70) and (slaveData.health <= 100) )
+  {
+    /* Setting neopixel to green, if score is between 70 and 100 */
+    setneopixel(0, 255, 0);
+  }
+  else if ( (slaveData.health >= 40) and (slaveData.health <= 69) )
+  {
+    /* Setting neopixel to yellow, if score is between 40 and 69 */
+    setneopixel(255,255,0);
+  }
+  else if ( (slaveData.health >= 0) and (slaveData.health <= 39) )
+  {
+    /* Setting neopixel to yellow, if score is between 40 and 69 */
+    setneopixel(255, 0, 0);
+  }
+
   Serial.println();
   delay(50);
 }
  
 void setup() {
   // Init Serial Monitor
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
@@ -112,20 +128,13 @@ void setup() {
     return;
   }
 
-  Serial.println("Setting the directions for the pin");
+  Serial.println("******* Setting the LED to GREEN ********");
   pinMode(BUTTON_PIN,INPUT);
-  pinMode(RED_LED, OUTPUT);
-  pinMode(GREEN_LED, OUTPUT);
-
-  /* Setting Green LED ON and RED_LED OFF. */
-  digitalWrite(RED_LED, LOW);
-  digitalWrite(GREEN_LED, HIGH);
+  
+  pixels.begin();
 
   /* Turning ON GREEN */
   setneopixel(0, 255, 0);
-
-  pixels.begin();
-
 }
 
 
@@ -136,16 +145,14 @@ void Target_hit()
 
   for (int i = 0; i <= 2; i++)
   {
-    digitalWrite(RED_LED, HIGH);
     setneopixel(255, 0, 0);
     delay(600);
-    digitalWrite(RED_LED, LOW);
     setneopixel(0, 0, 0);
     delay(600);
   }
 }
 
-  void setneopixel(int r, int g, int b)
+void setneopixel(int r, int g, int b)
 {
   for(int i=0; i<=NUM; i++)
   {
@@ -156,10 +163,7 @@ void Target_hit()
 
 void loop() 
 {
-  digitalWrite(GREEN_LED, HIGH);
-  setneopixel(0, 255, 0);
-  
-  // ID 1 for target 1
+  // ID 2 for target 2
   myData.id = ID;
   myData.flag = 1;
   myData.Score = MAX_SCORE;
@@ -167,9 +171,6 @@ void loop()
   /****** When target is hit ******/
   if(digitalRead(BUTTON_PIN) == 1)
   {
-    digitalWrite(GREEN_LED, LOW);
-    setneopixel(0, 0, 0);
-
     // Blinking RED LED 3 times
     Target_hit();
 
@@ -180,6 +181,8 @@ void loop()
     if (result == ESP_OK) 
     {
       Serial.println("Sent Score");
+      Serial.println(" ");
+      Serial.println("Awaiting Score results ");
     }
     else 
     {

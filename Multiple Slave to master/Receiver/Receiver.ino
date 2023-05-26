@@ -180,7 +180,6 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
   if (esp_now_add_peer(&peerInfo) != ESP_OK)
   {
     Serial.println("Failed to add peer");
-    return;
   }
   
   delay(50);
@@ -284,7 +283,7 @@ void loop() {
 
         Serial.print("Time in Seconds = ");
         TotalTime = TeamData.time * 60;
-        Serial.println(TotalTime);
+        Serial.println(TeamData.time);
 
         Serial.println();
     
@@ -300,12 +299,14 @@ void loop() {
         }
 
         /* Updating data on Nextion HMI */
-        SendNextionCommand("time", String(TotalTime));
-        SendNextionCommand("time", String(TotalTime));
+        SendNextionCommand("time", String(TeamData.time)+" : "+"00");
+        SendNextionCommand("time", String(TeamData.time)+" : "+"00");
         SendNextionCommand("health", String(TeamData.health));
         SendNextionCommand("team", String(TeamName));
         SendNextionCommand("tank", String(TankName));
         SendNextionCommand("t5", String("Neutral"));
+        SendNextionCommand("start", String(" "));
+        SendNextionCommand("start", String(" "));
       }
 
       if((TeamData.go) and (TeamData.id == ID))

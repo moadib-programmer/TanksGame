@@ -60,9 +60,9 @@ void setup()
     {
     /* Send Team and tank name with space; for Brain 1*/
       TeamData.team_name = "DAVID BLUE";
-      TeamData.health = 150;
+      TeamData.health = 100;
       TeamData.go = 0;
-      TeamData.time = 5;
+      TeamData.time = 2;
       TeamData.id = i;
 
       radio.write(&TeamData, sizeof(StructureOfTeam));
