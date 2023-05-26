@@ -39,6 +39,8 @@ brain 2:
 */
 uint8_t broadcastAddress[] = {0x70, 0xB8, 0xF6, 0x5B, 0xF8, 0xB8};
 
+
+/******* Structure to send data to the brain ********/
 /*
   Explaining Structures :
       flag -> 1 positive
@@ -53,6 +55,13 @@ typedef struct struct_message {
 // Create a struct_message called myData
 struct_message myData;
 
+/************* Structure to receive data from brain *************/
+typedef struct StructureOfSlaves {
+    int health;       // must be unique for each sender board
+} StructureOfSlaves;
+
+StructureOfSlaves slaveData;
+
 // Create peer interface
 esp_now_peer_info_t peerInfo;
 
@@ -60,6 +69,17 @@ esp_now_peer_info_t peerInfo;
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+}
+
+// callback function that will be executed when data is received
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+  memcpy(&slaveData, incomingData, sizeof(slaveData));
+  Serial.print("Bytes received: ");
+  Serial.println(len);
+  Serial.print("Health: ");
+  Serial.println(slaveData.health);
+  Serial.println();
+  delay(50);
 }
  
 void setup() {
@@ -78,6 +98,7 @@ void setup() {
   // Once ESPNow is successfully Init, we will register for Send CB to
   // get the status of Trasnmitted packet
   esp_now_register_send_cb(OnDataSent);
+  esp_now_register_recv_cb(OnDataRecv);
   
   // Register peer
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
