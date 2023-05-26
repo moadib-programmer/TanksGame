@@ -1,12 +1,24 @@
 #include <esp_now.h>
 #include <WiFi.h>
+#include <Adafruit_NeoPixel.h>
+
+/* LED's on each target would be 8 connected to PIN 15 */
+#define PIN 15
+#define NUM 8
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM,PIN, NEO_GRB + NEO_KHZ800);
 
 #define  BUTTON_PIN    23
 #define  RED_LED       22
 #define  GREEN_LED     21
 
-// ID number of the Board
-#define  ID            1
+/**
+ * @brief HIT Brief
+ * If 
+ * id = 1, front hit
+ * id = 2, side hit
+ * id = 3, back hit
+ */
+#define  ID            (1U)
 
 /* Max and min score,
   When ball will hit, 
@@ -87,8 +99,13 @@ void setup() {
   /* Setting Green LED ON and RED_LED OFF. */
   digitalWrite(RED_LED, LOW);
   digitalWrite(GREEN_LED, HIGH);
+
+  /* Turning ON GREEN */
+  setneopixel(0, 255, 0);
+
+  pixels.begin();
+
 }
- 
 
 
 void Target_hit()
@@ -99,25 +116,38 @@ void Target_hit()
   for (int i = 0; i <= 2; i++)
   {
     digitalWrite(RED_LED, HIGH);
+    setneopixel(255, 0, 0);
     delay(600);
     digitalWrite(RED_LED, LOW);
+    setneopixel(0, 0, 0);
     delay(600);
   }
 }
 
+  void setneopixel(int r, int g, int b)
+{
+  for(int i=0; i<=NUM; i++)
+  {
+    pixels.setPixelColor(i, pixels.Color(r,g,b));
+    pixels.show();
+  }
+}
 
-void loop() {
-
+void loop() 
+{
   digitalWrite(GREEN_LED, HIGH);
+  setneopixel(0, 255, 0);
   
   // ID 1 for target 1
   myData.id = ID;
   myData.flag = 1;
   myData.Score = MAX_SCORE;
 
+  /****** When target is hit ******/
   if(digitalRead(BUTTON_PIN) == 1)
   {
     digitalWrite(GREEN_LED, LOW);
+    setneopixel(0, 0, 0);
 
     // Blinking RED LED 3 times
     Target_hit();
@@ -135,5 +165,4 @@ void loop() {
       Serial.println("Error sending the data");
     }
   }
-
 }

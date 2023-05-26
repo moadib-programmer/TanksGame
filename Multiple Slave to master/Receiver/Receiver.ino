@@ -14,7 +14,6 @@
  * id = 1, front hit
  * id = 2, side hit
  * id = 3, back hit
- * 
  */
 
 int GreenLed = 27;

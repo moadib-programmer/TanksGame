@@ -7,7 +7,6 @@ const uint64_t address = 0xF0F0F0F0E1LL;
 
 #define BUTTONPIN      (12U)
 #define NUM_OF_BRAINS  (1U)
-
  
 
 /************* Structure to send data to Brain *************/
