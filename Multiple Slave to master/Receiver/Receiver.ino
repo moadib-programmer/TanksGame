@@ -7,6 +7,10 @@
  
 /* ID of this Brain */
 #define ID  (1U)
+int GameEndFlag = 0;
+
+// MAC addresses of all slaves
+uint8_t slaveMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0x0D, 0x66};
 
 /**
  * @brief HIT Brief
@@ -94,108 +98,114 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
 {
-  char macStr[18];
-  Serial.print("Packet received from: ");
-  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  
-  Serial.println(macStr);
-
-  memcpy(&myData, incomingData, sizeof(myData));
-  Serial.printf("Board ID %u: %u bytes\n", myData.id, len);
-  // Update the structures with the new incoming data
-  boardsStruct[myData.id-1].flag = myData.flag;
-  boardsStruct[myData.id-1].Score = myData.Score;
-  Serial.printf("flag value: %d \n", boardsStruct[myData.id-1].flag);
-  Serial.printf("Score value Received: %d \n", boardsStruct[myData.id-1].Score);
-
-  if( (Final_Score - boardsStruct[myData.id-1].Score ) >= 0 ) 
+  if(GameEndFlag == 0)
   {
-    Final_Score = Final_Score - boardsStruct[myData.id-1].Score;
-  }
-  else
-  {
-    Final_Score = 0;
-  }
-
-  Serial.printf("Updated Score Value: %d \n", Final_Score);
-  SendNextionCommand("health", String(Final_Score));
-  SendNextionCommand("health", String(Final_Score));
-
-  /********* Send Hit Status **********/
-  switch (myData.id)
-  {
-  case 1:
-    SendNextionCommand("t5", String("FRONT HIT"));
-    SendNextionCommand("t5", String("FRONT HIT"));
-    break;
-  case 2:
-    SendNextionCommand("t5", String("SIDE HIT"));
-    SendNextionCommand("t5", String("SIDE HIT"));
-    break;
-  case 3:
-    SendNextionCommand("t5", String("BACK HIT"));
-    SendNextionCommand("t5", String("BACK HIT"));
-    break;
-  
-  default:
-    break;
-  }
-
-  
-  /********** Sending data to the admin **************/
-  BrainData.counter = counter;
-  BrainData.health = Final_Score;
-  BrainData.brain_id = ID;
-  
-  Serial.println(" ");
-  Serial.print("Packet No. = ");
-  Serial.println(BrainData.counter);
-  
-  Serial.print("Health = ");
-  Serial.print(BrainData.health);
- 
-  Serial.print("Brain ID = ");
-  Serial.print(BrainData.brain_id);
- 
-  Serial.println(" ");
-  
-  radio.write(&BrainData, sizeof(StructureOfBrain));
-  
-  Serial.println("Data Packet Sent");
-  Serial.println("");
-  
-  counter++;
+    char macStr[18];
+    Serial.print("Packet received from: ");
+    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
     
-  Serial.println();
+    Serial.println(macStr);
 
-  /************ Sending updated health to salve **************/
+    memcpy(&myData, incomingData, sizeof(myData));
+    Serial.printf("Board ID %u: %u bytes\n", myData.id, len);
+    // Update the structures with the new incoming data
+    boardsStruct[myData.id-1].flag = myData.flag;
+    boardsStruct[myData.id-1].Score = myData.Score;
+    Serial.printf("flag value: %d \n", boardsStruct[myData.id-1].flag);
+    Serial.printf("Score value Received: %d \n", boardsStruct[myData.id-1].Score);
 
-  // Register peer
-  memcpy(peerInfo.peer_addr, mac_addr, 6);
-  peerInfo.channel = 0;  
-  peerInfo.encrypt = false;
+    if( (Final_Score - boardsStruct[myData.id-1].Score ) >= 0 ) 
+    {
+      Final_Score = Final_Score - boardsStruct[myData.id-1].Score;
+    }
+    else
+    {
+      Final_Score = 0;
+    }
+
+    Serial.printf("Updated Score Value: %d \n", Final_Score);
+    SendNextionCommand("health", String(Final_Score));
+    SendNextionCommand("health", String(Final_Score));
+
+    /********* Send Hit Status **********/
+    switch (myData.id)
+    {
+    case 1:
+      SendNextionCommand("t5", String("FRONT HIT"));
+      SendNextionCommand("t5", String("FRONT HIT"));
+      break;
+    case 2:
+      SendNextionCommand("t5", String("SIDE HIT"));
+      SendNextionCommand("t5", String("SIDE HIT"));
+      break;
+    case 3:
+      SendNextionCommand("t5", String("BACK HIT"));
+      SendNextionCommand("t5", String("BACK HIT"));
+      break;
+    
+    default:
+      break;
+    }
+
+    
+  void SendNextionCommand(String object, String msg);
+
+    
+    /********** Sending data to the admin **************/
+    BrainData.counter = counter;
+    BrainData.health = Final_Score;
+    BrainData.brain_id = ID;
+    
+    Serial.println(" ");
+    Serial.print("Packet No. = ");
+    Serial.println(BrainData.counter);
+    
+    Serial.print("Health = ");
+    Serial.print(BrainData.health);
   
-  // Add peer        
-  if (esp_now_add_peer(&peerInfo) != ESP_OK)
-  {
-    Serial.println("Failed to add peer");
-  }
+    Serial.print("Brain ID = ");
+    Serial.print(BrainData.brain_id);
   
-  delay(50);
-   
-  // Send message via ESP-NOW
-  Serial.println("*** Sending the Score now ****");
-  slaveData.health = Final_Score;
-  esp_err_t result = esp_now_send(mac_addr, (uint8_t *) &slaveData, sizeof(slaveData));
-  
-  if (result == ESP_OK) 
-  {
-    Serial.println("Sent Score");
-  }
-  else 
-  {
-    Serial.println("Error sending the data");
+    Serial.println(" ");
+    
+    radio.write(&BrainData, sizeof(StructureOfBrain));
+    
+    Serial.println("Data Packet Sent");
+    Serial.println("");
+    
+    counter++;
+      
+    Serial.println();
+
+    /************ Sending updated health to salve **************/
+
+    // Register peer
+    memcpy(peerInfo.peer_addr, slaveMACAddress, 6);
+    peerInfo.channel = 0;  
+    peerInfo.encrypt = false;
+    
+    // Add peer        
+    if (esp_now_add_peer(&peerInfo) != ESP_OK)
+    {
+      Serial.println("Failed to add peer");
+    }
+    
+    delay(50);
+    
+    // Send message via ESP-NOW
+    Serial.println("*** Sending the Score now ****");
+    slaveData.health = Final_Score;
+    esp_err_t result = esp_now_send(slaveMACAddress, (uint8_t *) &slaveData, sizeof(slaveData));
+    
+    if (result == ESP_OK) 
+    {
+      Serial.println("Sent Score");
+    }
+    else 
+    {
+      Serial.println("Error sending the data");
+    }
   }
 
 }
@@ -241,6 +251,9 @@ void setup() {
 
   pinMode(GreenLed, OUTPUT);
   digitalWrite(GreenLed, LOW);
+
+  SendNextionCommand("start", String(" "));
+  SendNextionCommand("start", String(" "));
 
 }
  
@@ -307,6 +320,33 @@ void loop() {
         SendNextionCommand("t5", String("Neutral"));
         SendNextionCommand("start", String(" "));
         SendNextionCommand("start", String(" "));
+
+                // Register peer
+        memcpy(peerInfo.peer_addr, slaveMACAddress, 6);
+        peerInfo.channel = 0;  
+        peerInfo.encrypt = false;
+        
+        // Add peer        
+        if (esp_now_add_peer(&peerInfo) != ESP_OK)
+        {
+          Serial.println("Failed to add peer");
+        }
+        
+        delay(50);
+        
+        // Send message via ESP-NOW
+        Serial.println("*** Sending the Score now ****");
+        slaveData.health = Final_Score;
+        esp_err_t result = esp_now_send(slaveMACAddress, (uint8_t *) &slaveData, sizeof(slaveData));
+        
+        if (result == ESP_OK) 
+        {
+          Serial.println("Sent Score");
+        }
+        else 
+        {
+          Serial.println("Error sending the data");
+        }
       }
 
       if((TeamData.go) and (TeamData.id == ID))
@@ -349,7 +389,16 @@ void loop() {
     TimeLeft =  TotalTime - ((millis() - StartTime) / 1000);
     minute = (int) TimeLeft / 60;
     seconds = TimeLeft - (minute * 60);
-    countdown = String(minute) + " : "+ String(seconds);
+
+    if(minute < 10)
+    {
+      countdown = "0" + String(minute) + " : "+ String(seconds);
+    }
+    if(seconds < 10)
+    {
+      countdown = String(minute) + " : 0"+ String(seconds);
+    }
+    
     
     Serial.println("");
     SendNextionCommand("time", String(countdown));
@@ -363,11 +412,14 @@ void loop() {
     SendNextionCommand("time", String(0)); 
     SendNextionCommand("time", String(0)); 
     SendNextionCommand("start", String("Game Ended")); 
+
+    /* TODO: Add the ending of game logic here */
+    GameEndFlag = 1;
+    while(1);
   }
 
   // Acess the variables for each board
 
-  
 
   /*Board1 Data */
   int board1X = boardsStruct[0].flag;

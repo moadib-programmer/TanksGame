@@ -1,11 +1,15 @@
 #include <esp_now.h>
 #include <WiFi.h>
+#include <esp_wifi.h>
 #include <Adafruit_NeoPixel.h>
 
 /* LED's on each target would be 8 connected to PIN 15 */
 #define PIN 15
 #define NUM 9
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM,PIN, NEO_GRB + NEO_KHZ800);
+
+// Set your new MAC Address
+uint8_t newMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0x0D, 0x66};
 
 #define  BUTTON_PIN    23
 
@@ -99,6 +103,10 @@ void setup() {
 
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
+ esp_wifi_set_mac(WIFI_IF_STA, &newMACAddress[0]);
+
+  Serial.println(" ***** New mac address set ********");
+  delay(500);
 
   // Init ESP-NOW
   if (esp_now_init() != ESP_OK) {
