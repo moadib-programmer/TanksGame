@@ -6,7 +6,9 @@ RF24 radio(4, 5);
 const uint64_t address = 0xF0F0F0F0E1LL;
 
 #define BUTTONPIN      (12U)
-#define NUM_OF_BRAINS  (1U)
+#define NUM_OF_BRAINS  (2U)
+
+String TeamTank[NUM_OF_BRAINS] = {"DAVID BLUE", "NIKE GREEN"};
  
 
 /************* Structure to send data to Brain *************/
@@ -50,20 +52,21 @@ void setup()
   radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
   radio.startListening();              //This sets the module as receiver
 */
-    Serial.println("*** Sending First data to Brain: 01 ******");
-    delay(500);
+    Serial.println("*** Sending Data to brains******");
+    delay(200);
     Serial.println();
 
 
       /* TODO: Iterate the ID's here and send Team Commands */
-    for(int i = 1; i <= NUM_OF_BRAINS; i++)
+    for(int i = 0; i < NUM_OF_BRAINS; i++)
     {
-    /* Send Team and tank name with space; for Brain 1*/
-      TeamData.team_name = "DAVID BLUE";
-      TeamData.health = 100;
-      TeamData.go = 0;
-      TeamData.time = 2;
-      TeamData.id = i;
+    /******* Send Data to the brains ***********/
+      Serial.println("*** Sending First data to Brain: " + String( i + 1 )+ " ******");
+      TeamData.team_name = TeamTank[i];
+      TeamData.health = 100U;
+      TeamData.go = 0U;
+      TeamData.time = 2U;
+      TeamData.id = i + 1U;
 
       radio.write(&TeamData, sizeof(StructureOfTeam));
 
