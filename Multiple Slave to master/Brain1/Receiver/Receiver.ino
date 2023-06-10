@@ -8,10 +8,20 @@
  
 /* ID of this Brain */
 #define ID          (1U)
-#define VOLT_PIN    (27U)
+#define GREEN_LED   (27U)
 
+#define VOLT_PIN    (34U)
+#define RED_LED     (33U)
 
-int GameEndFlag = 0;
+double volt_measure()
+{
+  volatile int volt = analogRead(VOLT_PIN);// read the input
+  volatile double voltage = map(volt,0, 2600, 0, 7.4);// map 0-1023 to 0-2500 and add correction offset
+  return voltage + 1U;
+}
+
+int GameEndFlag = 0U;
+volatile float Voltage = 0U;
 
 // MAC addresses of all slaves
 uint8_t slaveMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0x0D, 0x66};
@@ -27,7 +37,6 @@ uint8_t newMACAddress[] = {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x66};
  * id = 3, back hit
  */
 
-int GreenLed = 27;
 unsigned long StartTime = 0;
 unsigned long TotalTime = 0;
 unsigned long TimeLeft = 0;
@@ -261,8 +270,13 @@ void setup() {
   radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
   radio.startListening();              //This sets the module as receiver
 
-  pinMode(GreenLed, OUTPUT);
-  digitalWrite(GreenLed, LOW);
+  pinMode(GREEN_LED, OUTPUT);
+  digitalWrite(GREEN_LED, LOW);
+
+  pinMode(RED_LED, OUTPUT);
+  digitalWrite(RED_LED, LOW);
+
+  pinMode(VOLT_PIN, INPUT);
 
   SendNextionCommand("start", String(" "));
   SendNextionCommand("start", String(" "));
@@ -282,7 +296,28 @@ void SendNextionCommand(String object, String msg)
   delay(50);
 }
 
-void loop() {
+void loop() 
+{
+  Voltage = volt_measure();
+
+  Serial.println("Voltage is: " + String(Voltage));
+
+  SendNextionCommand("t5",String(Voltage));
+  SendNextionCommand("t5", String(Voltage));
+
+  if(Voltage <= 3)
+  {
+    while(1)
+    {
+      Serial.println("*** ALERT: Voltage is down, voltage down ******");
+
+      digitalWrite(RED_LED, HIGH);
+      delay(500);
+      digitalWrite(RED_LED, LOW);
+      delay(500);
+    }
+  }
+
   while(TeamData.go == 0)
   {
     if(recvData())
@@ -311,17 +346,8 @@ void loop() {
         Serial.println(TeamData.time);
 
         Serial.println();
-    
-        Serial.println("Turning ON GREEN");
-        
-
-        for (int i = 0; i <= 2; i++)
-        { 
-          digitalWrite(GreenLed, HIGH);
-          delay(100);
-          digitalWrite(GreenLed, LOW);
-          delay(100);
-        }
+        delay(200);
+          
 
         /* Updating data on Nextion HMI */
         SendNextionCommand("time", String(TeamData.time)+" : "+"00");
@@ -333,7 +359,7 @@ void loop() {
         SendNextionCommand("start", String(" "));
         SendNextionCommand("start", String(" "));
 
-                // Register peer
+        // Register peer
         memcpy(peerInfo.peer_addr, slaveMACAddress, 6);
         peerInfo.channel = 0;  
         peerInfo.encrypt = false;
@@ -376,7 +402,7 @@ void loop() {
         SendNextionCommand("start", String(" "));
         delay(1000);          
 
-        digitalWrite(GreenLed, HIGH);
+        digitalWrite(GREEN_LED, HIGH);
 
         radio.openWritingPipe(address); //Setting the address where we will send the data
         radio.setPALevel(RF24_PA_MIN);  //You can set it as minimum or maximum depending on the distance between the transmitter and receiver.

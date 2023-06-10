@@ -5,8 +5,17 @@
 RF24 radio(4, 5); 
 const uint64_t address = 0xF0F0F0F0E1LL;
 
-#define BUTTONPIN      (12U)
-#define NUM_OF_BRAINS  (2U)
+#define BUTTONPIN       (12U)
+#define NUM_OF_BRAINS   (2U)
+#define VOLT_PIN        (39U)
+#define RED_LED         (34U)
+
+double volt_measure()
+{
+  int volt = analogRead(VOLT_PIN);// read the input
+  double voltage = map(volt,0, 3000, 0, 7.4);// map 0-1023 to 0-2500 and add correction offset
+  return voltage + 0.5;
+}
 
 String TeamTank[NUM_OF_BRAINS] = {"DAVID BLUE", "NIKE GREEN"};
  
