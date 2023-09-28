@@ -7,16 +7,17 @@
 #define PIN 15
 #define NUM 9
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM,PIN, NEO_GRB + NEO_KHZ800);
-
-#define VOLT_PIN        (39U)
-#define RED_LED         (34U)
+volatile float Voltage = 0U;
+#define VOLT_PIN    (34U)
+#define RED_LED     (33U)
 
 double volt_measure()
 {
-  int volt = analogRead(VOLT_PIN);// read the input
-  double voltage = map(volt,0, 3000, 0, 7.4);// map 0-1023 to 0-2500 and add correction offset
-  return voltage + 0.5;
+  volatile int volt = analogRead(VOLT_PIN);// read the input
+  volatile double voltage = map(volt,0, 2600, 0, 7.4);// map 0-1023 to 0-2500 and add correction offset
+  return voltage + 1U;
 }
+
 
 // Set your new MAC Address
 uint8_t newMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0x0D, 0x66};
@@ -130,6 +131,11 @@ void setup() {
     return;
   }
 
+  pinMode(RED_LED, OUTPUT);
+  digitalWrite(RED_LED, LOW);
+
+  pinMode(VOLT_PIN, INPUT);
+
   // Once ESPNow is successfully Init, we will register for Send CB to
   // get the status of Trasnmitted packet
   esp_now_register_send_cb(OnDataSent);
@@ -187,8 +193,12 @@ void loop()
   myData.flag = 1;
   myData.Score = MAX_SCORE;
 
+  Voltage = volt_measure();
+
+  Serial.println("Voltage is: " + String(Voltage));
+
   /****** When target is hit ******/
-  if(digitalRead(BUTTON_PIN) == 1)
+  if(digitalRead(BUTTON_PIN) == 1) 
   {
     // Blinking RED LED 3 times
     Target_hit();
@@ -208,4 +218,6 @@ void loop()
       Serial.println("Error sending the data");
     }
   }
+
+  delay(100);
 }

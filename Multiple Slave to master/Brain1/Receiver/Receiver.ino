@@ -293,7 +293,7 @@ void SendNextionCommand(String object, String msg)
   Serial.write(0xff);
   Serial.write(0xff);
 
-  delay(50);
+  delay(50); 
 }
 
 void loop() 
