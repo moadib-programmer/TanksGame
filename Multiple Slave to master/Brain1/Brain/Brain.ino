@@ -23,7 +23,7 @@ double volt_measure()
 int GameEndFlag = 0U;
 volatile float Voltage = 0U;
 
-// MAC addresses of all slaves
+// MAC addresses of slave to which score is needed to be sent.
 uint8_t slaveMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0x0D, 0x66};
 
 // Set your new MAC Address
@@ -74,39 +74,21 @@ StructureOfBrain BrainData;
 typedef struct StructureOfTargets 
 {
   int id;
-  int flag;
   int Score;
-}StructureOfTargets;
+} StructureOfTargets;
 
 /* Initial Score value */
 int Final_Score = 100;
 
-// Create a StructureOfTargets called myData
-StructureOfTargets myData;
-
-/************* Structure to send data to Slave *************/
-typedef struct StructureOfSlaves 
-{
-  int health;       // must be unique for each sender board
-} StructureOfSlaves;
-
-StructureOfSlaves slaveData;
+// Create a StructureOfTargets called rcvSlaveData
+StructureOfTargets rcvSlaveData;
 
 // Create peer interface
 esp_now_peer_info_t peerInfo;
 
-// Create a structure to hold the readings from each board
-StructureOfTargets board1;
-StructureOfTargets board2;
-StructureOfTargets board3;
-StructureOfTargets board4;
-
-// Create an array with all the structures
-StructureOfTargets boardsStruct[4] = {board1, board2, board3, board4};
-
-
 // callback when data is sent
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
+{
   Serial.print("\r\nLast Packet Send Status:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
@@ -114,6 +96,9 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
 {
+  int rcvd_id;
+  int rcvd_score;
+  
   if(GameEndFlag == 0)
   {
     char macStr[18];
@@ -123,17 +108,18 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     
     Serial.println(macStr);
 
-    memcpy(&myData, incomingData, sizeof(myData));
-    Serial.printf("Board ID %u: %u bytes\n", myData.id, len);
-    // Update the structures with the new incoming data
-    boardsStruct[myData.id-1].flag = myData.flag;
-    boardsStruct[myData.id-1].Score = myData.Score;
-    Serial.printf("flag value: %d \n", boardsStruct[myData.id-1].flag);
-    Serial.printf("Score value Received: %d \n", boardsStruct[myData.id-1].Score);
+    memcpy(&rcvSlaveData, incomingData, sizeof(rcvSlaveData));
+    Serial.printf("Board ID %u: %u bytes\n", rcvSlaveData.id, len);
 
-    if( (Final_Score - boardsStruct[myData.id-1].Score ) >= 0 ) 
+    // Update the structures with the new incoming data
+    rcvd_score = rcvSlaveData.Score;
+    Serial.printf("Score value Received: %d \n", rcvd_score);
+
+
+    /* Check if new score value is less than zero or not */
+    if( (Final_Score - rcvd_score ) >= 0 ) 
     {
-      Final_Score = Final_Score - boardsStruct[myData.id-1].Score;
+      Final_Score = Final_Score - rcvd_score;
     }
     else
     {
@@ -145,7 +131,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     SendNextionCommand("health", String(Final_Score));
 
     /********* Send Hit Status **********/
-    switch (myData.id)
+    switch (rcvSlaveData.id)
     {
     case 1:
       SendNextionCommand("t5", String("FRONT HIT"));
@@ -211,12 +197,11 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     
     // Send message via ESP-NOW
     Serial.println("*** Sending the Score now ****");
-    slaveData.health = Final_Score;
-    esp_err_t result = esp_now_send(slaveMACAddress, (uint8_t *) &slaveData, sizeof(slaveData));
+    esp_err_t result = esp_now_send(slaveMACAddress, (uint8_t *) &Final_Score, sizeof(Final_Score));
     
     if (result == ESP_OK) 
     {
-      Serial.println("Sent Score");
+      Serial.println("Sent Score to the slave");
     }
     else 
     {
@@ -374,8 +359,7 @@ void loop()
         
         // Send message via ESP-NOW
         Serial.println("*** Sending the Score now ****");
-        slaveData.health = Final_Score;
-        esp_err_t result = esp_now_send(slaveMACAddress, (uint8_t *) &slaveData, sizeof(slaveData));
+        esp_err_t result = esp_now_send(slaveMACAddress, (uint8_t *) &Final_Score, sizeof(Final_Score));
         
         if (result == ESP_OK) 
         {
@@ -408,7 +392,6 @@ void loop()
         radio.setPALevel(RF24_PA_MIN);  //You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
         radio.stopListening();          //This sets the module as transmitter
 
-        /*TODO: Add millisecond part and then update it under void Loop */
         StartTime = millis();
         Serial.println("Start Time : "+ String(StartTime));
 
@@ -455,25 +438,6 @@ void loop()
     GameEndFlag = 1;
     while(1);
   }
-
-  // Acess the variables for each board
-
-
-  /*Board1 Data */
-  int board1X = boardsStruct[0].flag;
-  int board1Y = boardsStruct[0].Score;
-  
-  /*Board2 Data*/
-  int board2X = boardsStruct[1].flag;
-  int board2Y = boardsStruct[1].Score;
-  
-  /*Board3 Data*/
-  int board3X = boardsStruct[2].flag;
-  int board3Y = boardsStruct[2].Score;
-
-  /*Board4 Data*/
-  int board4X = boardsStruct[3].flag;
-  int board4Y = boardsStruct[3].Score;
 
   delay(500);  
 }
