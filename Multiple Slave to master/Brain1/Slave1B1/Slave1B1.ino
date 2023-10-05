@@ -4,26 +4,11 @@
 #include <esp_wifi.h>
 
 /* LED's on each target would be connected to PIN 15 */
-#define PIN 15
-#define NUM 9
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM,PIN, NEO_GRB + NEO_KHZ800);
-volatile float Voltage = 0U;
+#define PIN          15
+#define NUM          9
 #define VOLT_PIN    (34U)
 #define RED_LED     (33U)
-
-double volt_measure()
-{
-  volatile int volt = analogRead(VOLT_PIN);// read the input
-  volatile double voltage = map(volt,0, 2600, 0, 7.4);// map 0-1023 to 0-2500 and add correction offset
-  return voltage + 1U;
-}
-
-
-// Set your new MAC Address
-uint8_t newMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0x0D, 0x66};
-
-#define  BUTTON_PIN    23
-
+#define BUTTON_PIN    23
 /**
  * @brief HIT Brief
  * If 
@@ -31,17 +16,15 @@ uint8_t newMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0x0D, 0x66};
  * id = 2, side hit
  * id = 3, back hit
  */
-#define  ID            (1U)
-
-/* Max and min score,
-  When ball will hit, 
-    The minimun score which should be deducted when ball hits
-    at MIN SPEED.
-    The maximum score which should be deducted when ball will 
-    hit at FULL SPEED.
-*/
+#define  ID           (1U)
 #define MIN_SCORE     5
-#define MAX_SCORE     30
+#define MAX_SCORE     10
+
+
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM,PIN, NEO_GRB + NEO_KHZ800);
+volatile float Voltage = 0U;
+// Set your new MAC Address
+uint8_t newMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB1, 0x01};
 
 /* Replace with Receiver's MAC Address 
 brain 1:
@@ -50,30 +33,29 @@ brain 1:
 brain 2:
 70:B8:F6:5B:F8:B8
 */
-uint8_t broadcastAddress[] = {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x66};
-int Health = 0U;
+
+uint8_t broadcastAddress[] = {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x01};
+
+double voltMeasure()
+{
+  volatile int volt = analogRead(VOLT_PIN);// read the input
+  volatile double voltage = map(volt,0, 2600, 0, 7.4);// map 0-1023 to 0-2500 and add correction offset
+  return voltage + 1U;
+}
+
+
 
 /******* Structure to send data to the brain ********/
-/*
-  Explaining Structures :
-      flag -> 1 positive
-      flag -> 2 Negative
-*/
 typedef struct struct_message {
     int id;       // must be unique for each sender board
-    int flag;     // 1 -> ADD, 2 -> Subtract
     int Score;    // Score to be sent
 } struct_message;
 
 // Create a struct_message called myData
 struct_message myData;
 
-/************* Structure to receive data from brain *************/
-typedef struct StructureOfSlaves {
-    int health;       // must be unique for each sender board
-} StructureOfSlaves;
-
-StructureOfSlaves slaveData;
+/************* Data to receive data from brain *************/
+int health = 0U;
 
 // Create peer interface
 esp_now_peer_info_t peerInfo;
@@ -86,24 +68,22 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-  memcpy(&slaveData, incomingData, sizeof(slaveData));
-  Serial.print("Bytes received: ");
-  Serial.println(len);
-  Serial.print("Health: ");
-  Serial.println(slaveData.health);
+  memcpy(&health, incomingData, sizeof(health));
+  Serial.print("Health Received from the brain: ");
+  Serial.println(health);
 
   /****************** Setting Neopixel depending on HEALTH *******************/
-  if( (slaveData.health >= 70) and (slaveData.health <= 100) )
+  if( (health >= 70) and (health <= 100) )
   {
     /* Setting neopixel to green, if score is between 70 and 100 */
     setneopixel(0, 255, 0);
   }
-  else if ( (slaveData.health >= 40) and (slaveData.health <= 69) )
+  else if ( (health >= 40) and (health <= 69) )
   {
     /* Setting neopixel to yellow, if score is between 40 and 69 */
     setneopixel(255,255,0);
   }
-  else if ( (slaveData.health >= 0) and (slaveData.health <= 39) )
+  else if ( (health >= 0) and (health <= 39) )
   {
     /* Setting neopixel to yellow, if score is between 40 and 69 */
     setneopixel(255, 0, 0);
@@ -136,8 +116,9 @@ void setup() {
 
   pinMode(VOLT_PIN, INPUT);
 
-  // Once ESPNow is successfully Init, we will register for Send CB to
-  // get the status of Trasnmitted packet
+  /**
+   * Register Datasend and Datarcv callback functions 
+   */
   esp_now_register_send_cb(OnDataSent);
   esp_now_register_recv_cb(OnDataRecv);
   
@@ -163,9 +144,9 @@ void setup() {
 }
 
 
-void Target_hit()
+void targetHitCallback()
 {
-  Serial.println("***** BUTTON PRESSED ****** ");
+  Serial.println("***** TARGET HIT ****** ");
   delay(100);
 
   for (int i = 0; i <= 2; i++)
@@ -179,7 +160,7 @@ void Target_hit()
 
 void setneopixel(int r, int g, int b)
 {
-  for(int i=0; i<=NUM; i++)
+  for(int i = 0; i <= NUM; i++)
   {
     pixels.setPixelColor(i, pixels.Color(r,g,b));
     pixels.show();
@@ -190,18 +171,17 @@ void loop()
 {
   // ID 2 for target 2
   myData.id = ID;
-  myData.flag = 1;
   myData.Score = MAX_SCORE;
 
-  Voltage = volt_measure();
+  Voltage = voltMeasure();
 
   Serial.println("Voltage is: " + String(Voltage));
 
   /****** When target is hit ******/
-  if(digitalRead(BUTTON_PIN) == 1)
+  if(digitalRead(BUTTON_PIN) == 1) 
   {
     // Blinking RED LED 3 times
-    Target_hit();
+    targetHitCallback();
 
     // Send message via ESP-NOW
     Serial.println("*** Sending the Score now ****");

@@ -7,7 +7,7 @@
 #include <RF24.h>
  
 /* ID of this Brain */
-#define ID          (1U)
+#define ID          (2U)
 #define GREEN_LED   (27U)
 
 #define VOLT_PIN    (34U)
@@ -24,10 +24,25 @@ int GameEndFlag = 0U;
 volatile float Voltage = 0U;
 
 // MAC addresses of slave to which score is needed to be sent.
-uint8_t slaveMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0x0D, 0x66};
+/*
+* Last two members would be different
+ 
+ For Slave Only change the last two members of the slaveMACAddress as follows:
+	0xB1  (Brain Number) 
+	0x01  (Slave Number i.e 0x01,0x02, 0x03....)
+	
+ For Brain Address only iterate the last member of the Brain as:
+	0xB1 for brain 1
+	0xB2 for brain 2
+	and so on.............
+*
+*
+ 
+*/
+uint8_t slaveMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB2, 0x01};
 
 // Set your new MAC Address
-uint8_t newMACAddress[] = {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x66};
+uint8_t newMACAddress[] =  {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x02};
 
 /**
  * @brief HIT Brief
@@ -90,6 +105,7 @@ esp_now_peer_info_t peerInfo;
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
 {
   Serial.print("\r\nLast Packet Send Status:\t");
+  
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
