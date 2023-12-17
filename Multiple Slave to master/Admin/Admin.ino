@@ -15,6 +15,21 @@ RF24 radio(4, 5);
 
 AsyncWebServer server(80);
 
+// Auxiliary variables to store the current output state
+int startFlag = 0U;
+int statusSave = 0u;
+int statusScore = 0u;
+
+String team1Name;
+String team2Name;
+String team1TankNames; 
+String team2tanknum; 
+String team1TankScores; 
+String team2TankScores; 
+String gameTime;
+String team2TankNames;
+
+
 int teamNum = 0; // Variable to store the team number
 String teamNames, tankNames;
 
@@ -33,10 +48,6 @@ const uint64_t address = 0xF0F0F0F0E1LL;
 const char* ssid = "SSID";
 const char* password = "PASSWORD";
 
-// Auxiliary variables to store the current output state
-int startFlag = 0U;
-int statusSave = 0u;
-int statusScore = 0u;
 
 
 int teamScores1[NUM_OF_BRAINS] = {100,200,300};
@@ -99,9 +110,12 @@ void sendDataToBrains()
 
     delay(500);
   }
+
+  Serial.println("Data sent");
 }
 
-void setup() {
+void setup() 
+{
   Serial.begin(115200);
 
   // Connect to Wi-Fi network with SSID and password
@@ -130,52 +144,101 @@ void setup() {
   radio.setPALevel(RF24_PA_MIN);  
   radio.stopListening(); 
 
-  Serial.println(" Starting Server ");
+Serial.println(" Starting Server ");
 
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+{
+  request->send(200, "text/html", html+dataPage);
+});
+
+  server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
   {
-    request->send(200, "text/html", html+dataPage);
-  });
-
-    server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
+    // Get the team1Name value from the submitted form
+    if(request->hasParam("team1Name", true))
     {
-      // Get the teamNum value from the submitted form
-      if(request->hasParam("teamNum", true))
-      {
-        teamNum = request->getParam("teamNum", true)->value().toInt();
-        Serial.print("Team Number received: ");
-        Serial.println(teamNum);
-      }
+      team1Name = request->getParam("team1Name", true)->value() ;
+      Serial.print("Team1 name received: ");
+      Serial.println(team1Name);
+    }
 
-      // Get the team Names from the submitted form
-      if(request->hasParam("teamNames", true))
-      {
-        teamNames = request->getParam("teamNames", true)->value();
-        Serial.print("Team Names received: ");
-        Serial.println(teamNames);
-      }
+    // Get the team2Name value from the submitted form
+    if(request->hasParam("team2Name", true))
+    {
+      team2Name = request->getParam("team2Name", true)->value() ;
+      Serial.print("Team2 name received: ");
+      Serial.println(team2Name);
+    }
 
-      // Get the tank Names from the submitted form
-      if(request->hasParam("tankNames", true))
-      {
-        tankNames = request->getParam("tankNames", true)->value();
-        Serial.print("tank Names received: ");
-        Serial.println(tankNames);
-        statusSave = 1;
-      }
-      delay(1000);
+    // Get the team1TankNames value from the submitted form
+    if(request->hasParam("team1TankNames", true))
+    {
+      team1TankNames = request->getParam("team1TankNames", true)->value() ;
+      Serial.print("Team1 tank names received: ");
+      Serial.println(team1TankNames);
+    }
 
-      request->send(200, "text/html", html+startPage);
-    });
+    // Get the team2TankNames from the submitted form
+    if(request->hasParam("team2TankNames", true))
+    {
+      team2TankNames = request->getParam("team2TankNames", true)->value();
+      Serial.print("Team2tank Name received: ");
+      Serial.println(team2TankNames);
+    }
 
-  server.on("/start", HTTP_POST, [](AsyncWebServerRequest *request)
-  {
-    Serial.println("Game is being started");
+    // Get the team1TankScores value from the submitted form
+    if(request->hasParam("team1TankScores", true))
+    {
+      team1TankScores = request->getParam("team1TankScores", true)->value() ;
+      Serial.print("Team1 tank scores received: ");
+      Serial.println(team1TankScores);
+    }
+
+    // Get the team2TankScores value from the submitted form
+    if(request->hasParam("team2TankScores", true))
+    {
+      team2TankScores = request->getParam("team2TankScores", true)->value() ;
+      Serial.print("Team2 tank scores received: ");
+      Serial.println(team2TankScores);
+    }
+
+    // Get the tank Names from the submitted form
+    if(request->hasParam("gameTime", true))
+    {
+      gameTime = request->getParam("gameTime", true)->value().toInt();
+      Serial.print("Game Time received: ");
+      Serial.println(gameTime);
+    }
+
+    statusSave = 1;
+    sendDataToBrains();
 
     delay(1000);
 
-    request->send(200, "text/html", html+scorePage);
+    request->send(200, "text/html", html+startPage);
+  });
+
+  /******* User clicks on Start the Game ********/
+
+  server.on("/start", HTTP_POST, [](AsyncWebServerRequest *request)
+  {
+    String scoreHtml;
+
+    Serial.println("Game is being started");
+
+    scoreHtml += html + scoreHead + String(gameTime) + "</h2>";
+
+    /* Appending Team Names */
+    scoreHtml += "<div id='TeamBlock'> <span id='TeamA'>Team" + String(team1Name) + " : </span><span id='ScoreA'>" + String(team1TankScores) + "</span>";
+
+    /* Appending Tank Name of team 1 */
+    scoreHtml += "<span id='TeamB'>Team " + String(team2TankNames) + ": </span> <span id='ScoreB'>" + String(team2TankScores) + "</span></div></body></html>";
+
+    delay(1000);
+
+    request->send(200, "text/html", scoreHtml);
     statusScore = 1;
+    scoreHtml = " ";
+    
   });
 
   server.begin();
@@ -215,24 +278,24 @@ void loop()
     {
       Serial.println(" Yaho starting");
       delay(1000);
-        for(int i = 1; i <= NUM_OF_BRAINS; i++)
-  {
-    TeamData.go = 1;
-    
-    /* ID of slaves */
-    TeamData.id = i; 
+      for(int i = 1; i <= NUM_OF_BRAINS; i++)
+      {
+        TeamData.go = 1;
+        
+        /* ID of slaves */
+        TeamData.id = i; 
 
-    /* Starting the game */
-    Serial.println(" >>>> Starting the Game Now: <<<< ");
-    radio.write(&TeamData, sizeof(StructureOfTeam));
+        /* Starting the game */
+        Serial.println(" >>>> Starting the Game Now: <<<< ");
+        radio.write(&TeamData, sizeof(StructureOfTeam));
 
-    Serial.println("Data Packet Sent");
-    Serial.println("");
+        Serial.println("Data Packet Sent");
+        Serial.println("");
 
-    delay(1000);
-  }
+        delay(1000);
+      }
   
-  Serial.println("Receiver Started....");
+    Serial.println("Receiver Started....");
 
   radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
   radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.

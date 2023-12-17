@@ -21,6 +21,18 @@ String html = R"(
           font-family: sans-serif;
 
         }
+
+       .tab1 {
+          display: inline-block;
+          margin-left: 60px;
+        }
+
+        .tab2 
+        {
+          display: inline-block;
+          margin-left: 60px;
+        }
+        
         .square 
         {
           width: 200px;
@@ -32,6 +44,48 @@ String html = R"(
           color: white;
           font-family: Arial, sans-serif;
         }
+        h1,h2
+        {
+            text-align: center;
+            margin: 30px 0px;
+        }
+
+        #TeamBlock
+        {
+            border: 3px solid blue;
+            width: 500px;
+            margin-left: 30%;
+        }
+
+        #TeamA
+        {
+            width:160px;
+            margin-left: 10px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        #TeamB
+        {
+            margin-left: 25px;
+            display: inline-block;
+            width:130px;
+            margin-top: 10px;
+        }
+
+        #ScoreA
+        {
+            border-right: 3px solid rgb(246, 89, 72);
+            padding-right:40px;
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        #ScoreB
+        {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 )";
@@ -39,24 +93,42 @@ String html = R"(
 
 String dataPage = R"(
 <body>
-    <h1>Data Page</h1>
-
+    <h1>Data Input</h1>
     <form action='/save' method='post'>
-        <label style="font-size: 20px;" for="teamNum">Enter number of teams</label>
+
+        <label style="font-size: 20px;" for="team1Name">Enter Team 1 Name</label>
         <div>
-            <input type="number" name="teamNum" required>
+            <input type="text" name="team1Name" required>
         </div>
         <br>
 
-        <label style="font-size: 20px;" for="teamNames">Enter Team names (seperated by ,)</label>
+        <label style="font-size: 20px;" for="team2Name">Enter Team 2 Name</label>
         <div>
-            <input type="text" name="teamNames" required>
+            <input type="text" name="team2Name" required>
         </div>
         <br>
 
-        <label style="font-size: 20px;" for="tankNames">Enter Tank names (seperated by ,)</label>
+        <label style="font-size: 20px;" for="team1TankNames">Enter Team 1 Tank names (seperated by ,)</label>
         <div>
-            <input type="text" name="tankNames" required>
+            <input type="text" name="team1TankNames" required>
+        </div>
+        <br>
+
+        <label style="font-size: 20px;" for="team2TankNames">Enter Team 2 Tank names(seperated by ,)</label>
+        <div>
+            <input type="text" name="team2TankNames" required>
+        </div>
+        <br>
+
+        <label style="font-size: 20px;" for="team1TankScores">Enter Team 1 Tank Scores  (seperated by ,)</label>
+        <div>
+            <input type="text" name="team1TankScores" required>
+        </div>
+        <br>
+
+        <label style="font-size: 20px;" for="team2TankScores">Enter Team 2 Tank Scores  (seperated by ,)</label>
+        <div>
+            <input type="text" name="team2TankScores" required>
         </div>
         <br>
 
@@ -66,7 +138,6 @@ String dataPage = R"(
         
     </form>
 </body>
-
 </html>
 )";
 
@@ -88,25 +159,12 @@ String startPage = R"(
 
 )";
 
-String scorePage = R"(
+String scoreHead = R"(
 <body>
-    <h1>Score Page</h1>
-    <p>These are the teams and here are their scores</p>
+    <h1>Tanks Game</h1>
 
-    <div style="background-color: #3498db;" id="team1" class="square">
-      <h2>Team Name: Team Alpha</h2>
-      <p>Score: 85</p>
-    </div>
-  
-    <div style="background-color: #e74c3c;" id="team2" class="square">
-      <h2>Team Name: Team Bravo</h2>
-      <p>Score: 72</p>
-    </div>
-  
-    <div style="background-color: #27ae60;" id="team3" class="square">
-      <h2>Team Name: Team Charlie</h2>
-      <p>Score: 93</p>
-    </div>
-  </body>
-</html>
+    <h2>Game Type</h2>
+    <h2>Game Time: 
 )";
+
+
