@@ -102,6 +102,12 @@ String dataPage = R"(
         </div>
         <br>
 
+        <label style="font-size: 20px;" for="time">Enter Game Time</label>
+        <div>
+            <input type="text" name="time" required>
+        </div>
+        <br>
+
         <label style="font-size: 20px;" for="team2Name">Enter Team 2 Name</label>
         <div>
             <input type="text" name="team2Name" required>
@@ -166,5 +172,4 @@ String scoreHead = R"(
     <h2>Game Type</h2>
     <h2>Game Time: 
 )";
-
 

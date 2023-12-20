@@ -26,7 +26,7 @@ String team1TankNames;
 String team2tanknum; 
 String team1TankScores; 
 String team2TankScores; 
-String gameTime;
+int gameTime;
 String team2TankNames;
 
 
@@ -153,7 +153,6 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
 
   server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
   {
-    // Get the team1Name value from the submitted form
     if(request->hasParam("team1Name", true))
     {
       team1Name = request->getParam("team1Name", true)->value() ;
@@ -161,7 +160,6 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
       Serial.println(team1Name);
     }
 
-    // Get the team2Name value from the submitted form
     if(request->hasParam("team2Name", true))
     {
       team2Name = request->getParam("team2Name", true)->value() ;
@@ -169,7 +167,7 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
       Serial.println(team2Name);
     }
 
-    // Get the team1TankNames value from the submitted form
+
     if(request->hasParam("team1TankNames", true))
     {
       team1TankNames = request->getParam("team1TankNames", true)->value() ;
@@ -177,7 +175,6 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
       Serial.println(team1TankNames);
     }
 
-    // Get the team2TankNames from the submitted form
     if(request->hasParam("team2TankNames", true))
     {
       team2TankNames = request->getParam("team2TankNames", true)->value();
@@ -185,7 +182,6 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
       Serial.println(team2TankNames);
     }
 
-    // Get the team1TankScores value from the submitted form
     if(request->hasParam("team1TankScores", true))
     {
       team1TankScores = request->getParam("team1TankScores", true)->value() ;
@@ -193,7 +189,6 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
       Serial.println(team1TankScores);
     }
 
-    // Get the team2TankScores value from the submitted form
     if(request->hasParam("team2TankScores", true))
     {
       team2TankScores = request->getParam("team2TankScores", true)->value() ;
@@ -201,15 +196,13 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
       Serial.println(team2TankScores);
     }
 
-    // Get the tank Names from the submitted form
-    if(request->hasParam("gameTime", true))
+    if(request->hasParam("time", true))
     {
-      gameTime = request->getParam("gameTime", true)->value().toInt();
-      Serial.print("Game Time received: ");
+      gameTime = request->getParam("time", true)->value().toInt() ;
+      Serial.print("GameTime received: ");
       Serial.println(gameTime);
     }
 
-    statusSave = 1;
     sendDataToBrains();
 
     delay(1000);
