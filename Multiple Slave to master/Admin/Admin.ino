@@ -6,6 +6,10 @@
 #include <ESPAsyncWebServer.h>
 #include "HTML.h"
 
+/**
+ * Macros for the configuration
+*/
+
 #define BUTTONPIN       (12U)
 #define NUM_OF_BRAINS   (3U)
 #define VOLT_PIN        (39U)
@@ -15,7 +19,10 @@ RF24 radio(4, 5);
 
 AsyncWebServer server(80);
 
-// Auxiliary variables to store the current output state
+/*
+Varibales for different states of the game
+*/
+
 int startFlag = 0U;
 int statusSave = 0u;
 int statusScore = 0u;
@@ -23,24 +30,30 @@ int statusScore = 0u;
 String team1Name;
 String team2Name;
 String team1TankNames; 
-String team2tanknum; 
+String team2TankNames; 
 String team1TankScores; 
-String team2TankScores; 
-int gameTime;
-String team2TankNames;
+String team2TankScores;
+
+uint16_t gameTime = 0u;
+uint8_t numberOfTeams = 0u;
 
 
 int teamNum = 0; // Variable to store the team number
 String teamNames, tankNames;
 
 // Define an array of team names and team members
-String teamNames1[] = {"Team1", "Team2","Team 3"};
-String teamMembers1[][4] = 
-{
-  {"Team Member 1", "Team Member 2", "Team Member 3", "Team Member 4"},
-  {"Team Member A", "Team Member B", "Team Member C", "Team Member D"},
-  {"Team Member E", "Team Member F", "Team Member I", "Team Member J"},
-};
+String team1TankNamesArr[] = {};
+String team2TankNamesArr[] = {};
+String team1TankScoresArr[] = {};
+String team2TankScoresArr[] = {};
+
+// String teamNames1[] = {"Team1", "Team2","Team 3"};
+// String teamMembers1[][4] = 
+// {
+//   {"Team Member 1", "Team Member 2", "Team Member 3", "Team Member 4"},
+//   {"Team Member A", "Team Member B", "Team Member C", "Team Member D"},
+//   {"Team Member E", "Team Member F", "Team Member I", "Team Member J"},
+// };
 
 const uint64_t address = 0xF0F0F0F0E1LL;
 
@@ -50,8 +63,8 @@ const char* password = "PASSWORD";
 
 
 
-int teamScores1[NUM_OF_BRAINS] = {100,200,300};
-String TeamTank1[NUM_OF_BRAINS] = {"DAVID BLUE", "NIKE GREEN", "NEWL GREEN"};
+// int teamScores1[NUM_OF_BRAINS] = {100,200,300};
+// String TeamTank1[NUM_OF_BRAINS] = {"DAVID BLUE", "NIKE GREEN", "NEWL GREEN"};
 
 int waitForStart();
 
