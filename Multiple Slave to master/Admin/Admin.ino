@@ -11,7 +11,7 @@
 */
 
 #define BUTTONPIN       (12U)
-#define NUM_OF_BRAINS   (3U)
+#define MAX_TEAMS       (20U)
 #define VOLT_PIN        (39U)
 #define RED_LED         (34U)
 
@@ -30,22 +30,21 @@ int statusScore = 0u;
 String team1Name;
 String team2Name;
 String team1TankNames; 
-String team2TankNames; 
+String team2TankNames;
 String team1TankScores; 
-String team2TankScores;
+String team2TankScores; 
 
 uint16_t gameTime = 0u;
-uint8_t numberOfTeams = 0u;
 
+uint8_t tankNum = 0u; /* Variable to store the team number */
 
-int teamNum = 0; // Variable to store the team number
-String teamNames, tankNames;
+/* Array containing team1 and team2 Tanks Names */
+String team1TanksNamesArr[MAX_TEAMS] = {};
+String team2TanksNamesArr[MAX_TEAMS] = {};
 
-// Define an array of team names and team members
-String team1TankNamesArr[] = {};
-String team2TankNamesArr[] = {};
-String team1TankScoresArr[] = {};
-String team2TankScoresArr[] = {};
+/* Array containing team1 and team2 Tanks Scores */
+String team1TanksScoresArr[MAX_TEAMS] = {};
+String team2TanksScoresArr[MAX_TEAMS] = {};
 
 // String teamNames1[] = {"Team1", "Team2","Team 3"};
 // String teamMembers1[][4] = 
@@ -61,12 +60,11 @@ const uint64_t address = 0xF0F0F0F0E1LL;
 const char* ssid = "SSID";
 const char* password = "PASSWORD";
 
-
-
 // int teamScores1[NUM_OF_BRAINS] = {100,200,300};
 // String TeamTank1[NUM_OF_BRAINS] = {"DAVID BLUE", "NIKE GREEN", "NEWL GREEN"};
 
 int waitForStart();
+void ProcessTheData(void);
 
 double volt_measure()
 {
@@ -103,28 +101,34 @@ StructureOfBrain BrainData;
  */
 void sendDataToBrains()
 {
-  Serial.println("*** Sending Data to brains******");
+  Serial.println("*** Sending Data to tanks of both teams ******");
   delay(200);
   Serial.println();
 
-
-    /* TODO: Iterate the ID's here and send Team Commands */
-  for(int i = 0; i < NUM_OF_BRAINS ; i++)
+  for(int i = 0; i < tankNum ; i++)
   {
-  /******* Send Data to the brains ***********/
-    Serial.println("*** Sending First data to Brain: " + String( i + 1 )+ " ******");
-    TeamData.team_name = TeamTank1[i];
-    TeamData.health = teamScores1[i];
+    /* Sending Data of each tank of Team 1 */
+    Serial.println("*** Sending Data to the Tank : " + String( i + 1 )+ "of team 1 ******");
+    TeamData.team_name = team1TanksNamesArr[i];
+    TeamData.health = team1TanksScoresArr[i].toInt();
     TeamData.go = 0U;
-    TeamData.time = 2U;
+    TeamData.time = gameTime;
     TeamData.id = i + 1U;
+    radio.write(&TeamData, sizeof(StructureOfTeam));
 
+    /* Sending Data of each tank of Team 2 */
+    Serial.println("*** Sending Data to the Tank : " + String( i + 1 )+ "of team 2 ******");
+    TeamData.team_name = team2TanksNamesArr[i];
+    TeamData.health = team2TanksScoresArr[i].toInt();
+    TeamData.go = 0U;
+    TeamData.time = gameTime;
+    TeamData.id = i + 1U;
     radio.write(&TeamData, sizeof(StructureOfTeam));
 
     delay(500);
   }
 
-  Serial.println("Data sent");
+  Serial.println("Data sent to each tank of both teams");
 }
 
 void setup() 
@@ -156,6 +160,12 @@ void setup()
   radio.openWritingPipe(address); 
   radio.setPALevel(RF24_PA_MIN);  
   radio.stopListening(); 
+
+/************************************************************
+ *                                                          *
+ *             Handling Servers responses                   *
+ *                                                          *
+ ************************************************************/
 
 Serial.println(" Starting Server ");
 
@@ -211,10 +221,12 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
 
     if(request->hasParam("time", true))
     {
-      gameTime = request->getParam("time", true)->value().toInt() ;
+      gameTime = request->getParam("time", true)->value().toInt();
       Serial.print("GameTime received: ");
       Serial.println(gameTime);
     }
+
+    ProcessTheData();
 
     sendDataToBrains();
 
@@ -284,7 +296,8 @@ void loop()
     {
       Serial.println(" Yaho starting");
       delay(1000);
-      for(int i = 1; i <= NUM_OF_BRAINS; i++)
+      
+      for(int i = 1; i <= MAX_TEAMS; i++)
       {
         TeamData.go = 1;
         
@@ -329,16 +342,16 @@ void loop()
  
   Serial.print("Brain ID = ");
   Serial.print(BrainData.brain_id);
-  
 
-  if(BrainData.brain_id >= 1)
-  {
-    teamScores1[BrainData.brain_id - 1] = BrainData.health;
-  }
- 
   Serial.println();
 
   }
+}
 
-  
+void ProcessTheData(void)
+{
+  /* Process all of the data and stores the data into the arrays */
+  // String Tanks1[] = Sub 
+
+
 }
