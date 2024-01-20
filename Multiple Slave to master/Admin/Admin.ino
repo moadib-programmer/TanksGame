@@ -175,6 +175,12 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
       Serial.println(team2Name);
     }
 
+    if(request->hasParam("tankNum", true))
+    {
+      tankNum = request->getParam("tankNum", true)->value().toInt() ;
+      Serial.print("Number of Tanks: ");
+      Serial.println(tankNum);
+    }
 
     if(request->hasParam("team1TankNames", true))
     {

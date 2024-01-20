@@ -120,6 +120,12 @@ String dataPage = R"(
         </div>
         <br>
 
+        <label style="font-size: 20px;" for="tankNum">Enter total number of Tanks</label>
+        <div>
+            <input type="text" name="tankNum" required>
+        </div>
+        <br>
+
         <label style="font-size: 20px;" for="team2TankNames">Enter Team 2 Tank names(seperated by ,)</label>
         <div>
             <input type="text" name="team2TankNames" required>
