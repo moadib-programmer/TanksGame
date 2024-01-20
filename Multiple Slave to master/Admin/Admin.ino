@@ -1,4 +1,4 @@
-// Load Wi-Fi library
+/***************************** Includes ****************************/
 #include <WiFi.h>
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -6,26 +6,18 @@
 #include <ESPAsyncWebServer.h>
 #include "HTML.h"
 
-/**
- * Macros for the configuration
-*/
+/***************************** Macros ****************************/
 
 #define BUTTONPIN       (12U)
 #define MAX_TEAMS       (20U)
 #define VOLT_PIN        (39U)
 #define RED_LED         (34U)
 
+/***************************** Variables ****************************/
 RF24 radio(4, 5); 
-
 AsyncWebServer server(80);
-
-/*
-Varibales for different states of the game
-*/
-
-int startFlag = 0U;
-int statusSave = 0u;
-int statusScore = 0u;
+uint8_t statusSave = 0u;
+uint8_t statusScore = 0u;
 
 String team1Name;
 String team2Name;
@@ -35,7 +27,6 @@ String team1TankScores;
 String team2TankScores; 
 
 uint16_t gameTime = 0u;
-
 uint8_t tankNum = 0u; /* Variable to store the team number */
 
 /* Array containing team1 and team2 Tanks Names */
@@ -46,25 +37,18 @@ String team2TanksNamesArr[MAX_TEAMS] = {};
 String team1TanksScoresArr[MAX_TEAMS] = {};
 String team2TanksScoresArr[MAX_TEAMS] = {};
 
-// String teamNames1[] = {"Team1", "Team2","Team 3"};
-// String teamMembers1[][4] = 
-// {
-//   {"Team Member 1", "Team Member 2", "Team Member 3", "Team Member 4"},
-//   {"Team Member A", "Team Member B", "Team Member C", "Team Member D"},
-//   {"Team Member E", "Team Member F", "Team Member I", "Team Member J"},
-// };
-
 const uint64_t address = 0xF0F0F0F0E1LL;
 
 // Replace with your network credentials
 const char* ssid = "SSID";
 const char* password = "PASSWORD";
 
-// int teamScores1[NUM_OF_BRAINS] = {100,200,300};
-// String TeamTank1[NUM_OF_BRAINS] = {"DAVID BLUE", "NIKE GREEN", "NEWL GREEN"};
 
+/************************* Function Protoypes ************************/
 int waitForStart();
 void ProcessTheData(void);
+
+
 
 double volt_measure()
 {
@@ -74,6 +58,7 @@ double volt_measure()
 }
 
 /************* Structure to send data to Brain *************/
+
 struct StructureOfTeam
 {
   String team_name;
@@ -348,10 +333,34 @@ void loop()
   }
 }
 
+
+/**
+ * @brief This function processes tank names, scores string, splits them
+ *        and populate the tanks array.
+ * 
+ * @param void
+ * 
+ * @return void
+*/
 void ProcessTheData(void)
 {
-  /* Process all of the data and stores the data into the arrays */
-  // String Tanks1[] = Sub 
+  String tank_name;
+  uint8_t count = 0u;
 
+  /* Getting the tank Names */
+  for(int i = 0u; i < team1TankNames.length(); i++)
+  {
+    if(team1TankNames[i] == ',')
+    {
+      team1TanksNamesArr[count] = tank_name;
+      tank_name = "";
+      count++;
+    }
+    else
+    {
+      tank_name += team1TankNames[i];
+    }
+  }
 
+  /* TODO: get the team2 names and scores */
 }
