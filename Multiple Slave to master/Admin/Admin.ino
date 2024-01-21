@@ -359,6 +359,7 @@ void ProcessTheData(void)
     if(team1TankNames[i] == ',')
     {
       team1TanksNamesArr[count] = tank_name;
+      Serial.println(tank_name);
       tank_name = "";
       count++;
     }
@@ -367,6 +368,8 @@ void ProcessTheData(void)
       tank_name += team1TankNames[i];
     }
   }
+
+  Serial.println(tank_name);
 
   /* TODO: get the team2 names and scores */
 }
