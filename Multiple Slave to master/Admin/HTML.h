@@ -53,32 +53,34 @@ String html = R"(
         #TeamBlock
         {
             border: 3px solid blue;
-            width: 500px;
-            margin-left: 30%;
+            width: 358px;
+            margin-left: 36%;
         }
 
         #TeamA
         {
             width:160px;
-            margin-left: 10px;
+            margin-left: 45px;
             display: inline-block;
             margin-top: 10px;
+            margin-bottom: 15px;
         }
 
         #TeamB
         {
-            margin-left: 25px;
+            margin-left: 15px;
             display: inline-block;
             width:130px;
             margin-top: 10px;
+            margin-bottom: 15px;
         }
 
         #ScoreA
         {
             border-right: 3px solid rgb(246, 89, 72);
             padding-right:40px;
-            margin-left: 20px;
-            margin-top: 10px;
+            margin-left: 31px;
+            margin-top: 50px;
         }
 
         #ScoreB
@@ -96,15 +98,21 @@ String dataPage = R"(
     <h1>Data Input</h1>
     <form action='/save' method='post'>
 
-        <label style="font-size: 20px;" for="team1Name">Enter Team 1 Name</label>
-        <div>
-            <input type="text" name="team1Name" required>
-        </div>
-        <br>
-
         <label style="font-size: 20px;" for="time">Enter Game Time</label>
         <div>
             <input type="text" name="time" required>
+        </div>
+        <br>
+
+        <label style="font-size: 20px;" for="tankNum">Enter the total number of Tanks</label>
+        <div>
+            <input type="text" name="tankNum" required>
+        </div>
+        <br>
+
+        <label style="font-size: 20px;" for="team1Name">Enter Team 1 Name</label>
+        <div>
+            <input type="text" name="team1Name" required>
         </div>
         <br>
 
@@ -120,21 +128,15 @@ String dataPage = R"(
         </div>
         <br>
 
-        <label style="font-size: 20px;" for="tankNum">Enter total number of Tanks</label>
+        <label style="font-size: 20px;" for="team1TankScores">Enter Team 1 Tank Scores  (seperated by ,)</label>
         <div>
-            <input type="text" name="tankNum" required>
+            <input type="text" name="team1TankScores" required>
         </div>
         <br>
 
         <label style="font-size: 20px;" for="team2TankNames">Enter Team 2 Tank names(seperated by ,)</label>
         <div>
             <input type="text" name="team2TankNames" required>
-        </div>
-        <br>
-
-        <label style="font-size: 20px;" for="team1TankScores">Enter Team 1 Tank Scores  (seperated by ,)</label>
-        <div>
-            <input type="text" name="team1TankScores" required>
         </div>
         <br>
 

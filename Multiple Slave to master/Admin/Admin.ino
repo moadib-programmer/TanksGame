@@ -8,7 +8,7 @@
 
 /***************************** Macros ****************************/
 
-#define BUTTONPIN       (12U)
+#define BUTTON_PIN       (12U)
 #define MAX_TEAMS       (20U)
 #define VOLT_PIN        (39U)
 #define RED_LED         (34U)
@@ -93,18 +93,9 @@ void sendDataToBrains()
   for(int i = 0; i < tankNum ; i++)
   {
     /* Sending Data of each tank of Team 1 */
-    Serial.println("*** Sending Data to the Tank : " + String( i + 1 )+ "of team 1 ******");
-    TeamData.team_name = team1TanksNamesArr[i];
-    TeamData.health = team1TanksScoresArr[i].toInt();
-    TeamData.go = 0U;
-    TeamData.time = gameTime;
-    TeamData.id = i + 1U;
-    radio.write(&TeamData, sizeof(StructureOfTeam));
-
-    /* Sending Data of each tank of Team 2 */
-    Serial.println("*** Sending Data to the Tank : " + String( i + 1 )+ "of team 2 ******");
-    TeamData.team_name = team2TanksNamesArr[i];
-    TeamData.health = team2TanksScoresArr[i].toInt();
+    Serial.println("*** Sending Data to the Tank : " + String( i + 1 )+ " of team 1 ******");
+    TeamData.team_name = "blue";
+    TeamData.health = 200;
     TeamData.go = 0U;
     TeamData.time = gameTime;
     TeamData.id = i + 1U;
@@ -139,7 +130,7 @@ void setup()
    
   radio.begin();
 
-  pinMode(BUTTONPIN, INPUT);
+  pinMode(BUTTON_PIN, INPUT);
   
   Serial.println("Transmitter started....");
   radio.openWritingPipe(address); 
@@ -217,7 +208,7 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
       Serial.println(gameTime);
     }
 
-    ProcessTheData();
+    // ProcessTheData();
 
     sendDataToBrains();
 
@@ -234,18 +225,19 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
 
     Serial.println("Game is being started");
 
-    scoreHtml += html + scoreHead + String(gameTime) + "</h2>";
+    scoreHtml += html + scoreHead + String(gameTime) + " minutes</h2>";
 
     /* Appending Team Names */
-    scoreHtml += "<div id='TeamBlock'> <span id='TeamA'>Team" + String(team1Name) + " : </span><span id='ScoreA'>" + String(team1TankScores) + "</span>";
+    scoreHtml += "<div id='TeamBlock'> <span id='TeamA'>Team " + String(team1Name) + "</span><span id='TeamB'>Team " + String(team2Name) + "</span>";
 
     /* Appending Tank Name of team 1 */
-    scoreHtml += "<span id='TeamB'>Team " + String(team2TankNames) + ": </span> <span id='ScoreB'>" + String(team2TankScores) + "</span></div></body></html>";
+    scoreHtml += "<span id='ScoreA'> Tank " + String(team1TankNames) + ": " + String(team1TankScores) + "</span> <span id='ScoreB'> Tank " + String(team2TankNames) + ": " + String(team2TankScores) + "</span></div></body></html>";
 
     delay(1000);
 
     request->send(200, "text/html", scoreHtml);
-    statusScore = 1;
+    // statusScore = 1;
+    ProcessTheData();
     scoreHtml = " ";
     
   });
@@ -267,60 +259,6 @@ int recvData()
 
 void loop()
 {
-
-    while(1)
-  {
-    if(statusSave == 1)
-    {
-      Serial.println ("Loop Broken");
-
-      sendDataToBrains();
-      statusSave = 0;
-      break;
-    }
-  }
-
-
-  while(1)
-  {
-    if(statusScore)
-    {
-      Serial.println(" Yaho starting");
-      delay(1000);
-      
-      for(int i = 1; i <= MAX_TEAMS; i++)
-      {
-        TeamData.go = 1;
-        
-        /* ID of slaves */
-        TeamData.id = i; 
-
-        /* Starting the game */
-        Serial.println(" >>>> Starting the Game Now: <<<< ");
-        radio.write(&TeamData, sizeof(StructureOfTeam));
-
-        Serial.println("Data Packet Sent");
-        Serial.println("");
-
-        delay(1000);
-      }
-  
-    Serial.println("Receiver Started....");
-
-  radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
-  radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
-  radio.startListening();              //This sets the module as receiver
-      statusScore = 0;
-      break;
-    }
-    else
-    {
-
-    }
-
-    delay(90);
-  } 
-
 
   if(recvData())
   {
@@ -350,26 +288,32 @@ void loop()
 */
 void ProcessTheData(void)
 {
-  String tank_name;
-  uint8_t count = 0u;
 
-  /* Getting the tank Names */
-  for(int i = 0u; i < team1TankNames.length(); i++)
-  {
-    if(team1TankNames[i] == ',')
-    {
-      team1TanksNamesArr[count] = tank_name;
-      Serial.println(tank_name);
-      tank_name = "";
-      count++;
-    }
-    else
-    {
-      tank_name += team1TankNames[i];
-    }
-  }
+      Serial.println(" Yaho starting");
+      delay(1000);
+      
+      for(int i = 1; i <= 3; i++)
+      {
+        TeamData.go = 1;
+        
+        /* ID of slaves */
+        TeamData.id = i; 
 
-  Serial.println(tank_name);
+        /* Starting the game */
+        Serial.println(" >>>> Starting the Game Now: <<<< ");
+        radio.write(&TeamData, sizeof(StructureOfTeam));
 
-  /* TODO: get the team2 names and scores */
+        Serial.println("Data Packet Sent");
+        Serial.println("");
+
+        delay(1000);
+      }
+  
+    Serial.println("Receiver Started....");
+
+    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
+    radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
+    radio.startListening();              //This sets the module as receiver
+
+    delay(90);
 }
