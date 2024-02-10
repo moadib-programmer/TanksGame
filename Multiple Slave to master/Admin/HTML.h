@@ -11,7 +11,7 @@ String html = R"(
         .button{
           color: white; 
           background-color: green; 
-          width : 70px; 
+          width : 130px; 
           height: 50px; 
           border: 3px solid black; 
           font-size: 20px;
@@ -163,7 +163,7 @@ String startPage = R"(
 
     <form action='/start' method='post'>
         <div  id="submitButton">
-            <input class="button" style="background-color:  green;" type="submit" value="Send">
+            <input class="button" style="background-color:  green;" type="submit" value="Start">
         </div>
         
     </form>
@@ -178,6 +178,13 @@ String scoreHead = R"(
     <h1>Tanks Game</h1>
 
     <h2>Game Type</h2>
+
+    <form action='/start' method='post'>
+      <div  id="submitButton">
+          <input class="button" style="background-color:  green;" type="submit" value="Fetch Score">
+      </div>
+    </form>
+
     <h2>Game Time: 
 )";
 

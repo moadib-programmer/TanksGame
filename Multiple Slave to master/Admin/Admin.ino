@@ -93,9 +93,11 @@ void sendDataToBrains()
   for(int i = 0; i < tankNum ; i++)
   {
     /* Sending Data of each tank of Team 1 */
-    Serial.println("*** Sending Data to the Tank : " + String( i + 1 )+ " of team 1 ******");
-    TeamData.team_name = "blue";
-    TeamData.health = 200;
+    Serial.println("*** Sending Data to the brain of ID : " + String( i + 1 )+ " of team " + team1Name  + "******");
+
+    /* Send the team name, add a space and then add the tank name */
+    TeamData.team_name = team1Name + " " + team1TankNames;
+    TeamData.health = team1TankScores.toInt();
     TeamData.go = 0U;
     TeamData.time = gameTime;
     TeamData.id = i + 1U;
@@ -104,7 +106,7 @@ void sendDataToBrains()
     delay(500);
   }
 
-  Serial.println("Data sent to each tank of both teams");
+  Serial.println(" Data has been sent to all tanks ");
 }
 
 void setup() 
@@ -263,16 +265,20 @@ void loop()
   if(recvData())
   {
  
-  Serial.print("Packet No. = ");
-  Serial.println(BrainData.counter);
-  
-  Serial.print("Health = ");
-  Serial.print(BrainData.health);
- 
-  Serial.print("Brain ID = ");
-  Serial.print(BrainData.brain_id);
+    Serial.print("Packet No. = ");
+    Serial.println(BrainData.counter);
+    
+    Serial.print("Health = ");
+    Serial.print(BrainData.health);
 
-  Serial.println();
+    team1TankScores = String(BrainData.health);
+    Serial.println(team1TankScores);
+    
+  
+    Serial.print("Brain ID = ");
+    Serial.print(BrainData.brain_id);
+
+    Serial.println();
 
   }
 }
@@ -289,25 +295,23 @@ void loop()
 void ProcessTheData(void)
 {
 
-      Serial.println(" Yaho starting");
-      delay(1000);
       
-      for(int i = 1; i <= 3; i++)
-      {
-        TeamData.go = 1;
-        
-        /* ID of slaves */
-        TeamData.id = i; 
+    for(int i = 1; i <= tankNum; i++)
+    {
+      TeamData.go = 1;
+      
+      /* ID of slaves */
+      TeamData.id = i; 
 
-        /* Starting the game */
-        Serial.println(" >>>> Starting the Game Now: <<<< ");
-        radio.write(&TeamData, sizeof(StructureOfTeam));
+      /* Starting the game */
+      Serial.println(" >>>> Starting the Game Now: <<<< ");
+      radio.write(&TeamData, sizeof(StructureOfTeam));
 
-        Serial.println("Data Packet Sent");
-        Serial.println("");
+      Serial.println("Data Packet Sent");
+      Serial.println("");
 
-        delay(1000);
-      }
+      delay(500);
+    }
   
     Serial.println("Receiver Started....");
 

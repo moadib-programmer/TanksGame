@@ -13,6 +13,8 @@
 #define VOLT_PIN    (34U)
 #define RED_LED     (33U)
 
+void SendNextionCommand(String object, String msg);
+
 double volt_measure()
 {
   volatile int volt = analogRead(VOLT_PIN);// read the input
@@ -23,7 +25,6 @@ double volt_measure()
 int GameEndFlag = 0U;
 volatile float Voltage = 0U;
 
-// MAC addresses of slave to which score is needed to be sent.
 /*
 * Last two members would be different
  
@@ -35,10 +36,9 @@ volatile float Voltage = 0U;
 	0xB1 for brain 1
 	0xB2 for brain 2
 	and so on.............
-*
-*
- 
 */
+
+// MAC addresses of slave to which score is needed to be sent.
 uint8_t slaveMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB1, 0x01};
 
 // Set your new MAC Address
@@ -101,7 +101,7 @@ StructureOfTargets rcvSlaveData;
 // Create peer interface
 esp_now_peer_info_t peerInfo;
 
-// callback when data is sent
+// callback when data is sent to the slave
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
 {
   Serial.print("\r\nLast Packet Send Status:\t");
@@ -109,7 +109,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
-// callback function that will be executed when data is received
+// callback function that will be executed when data is received from the slave
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
 {
   int rcvd_id;
@@ -118,19 +118,18 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
   if(GameEndFlag == 0)
   {
     char macStr[18];
-    Serial.print("Packet received from: ");
+    Serial.print("Packet received from Target: ");
     snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
             mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
     
     Serial.println(macStr);
 
     memcpy(&rcvSlaveData, incomingData, sizeof(rcvSlaveData));
-    Serial.printf("Board ID %u: %u bytes\n", rcvSlaveData.id, len);
+    Serial.printf("Target board ID %u: %u bytes\n", rcvSlaveData.id, len);
 
     // Update the structures with the new incoming data
     rcvd_score = rcvSlaveData.Score;
     Serial.printf("Score value Received: %d \n", rcvd_score);
-
 
     /* Check if new score value is less than zero or not */
     if( (Final_Score - rcvd_score ) >= 0 ) 
@@ -146,7 +145,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     SendNextionCommand("health", String(Final_Score));
     SendNextionCommand("health", String(Final_Score));
 
-    /********* Send Hit Status **********/
+    /********* Send Hit Status to the Nextion Display **********/
     switch (rcvSlaveData.id)
     {
     case 1:
@@ -167,10 +166,8 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     }
 
     
-  void SendNextionCommand(String object, String msg);
-
-    
     /********** Sending data to the admin **************/
+
     BrainData.counter = counter;
     BrainData.health = Final_Score;
     BrainData.brain_id = ID;
@@ -196,7 +193,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
       
     Serial.println();
 
-    /************ Sending updated health to salve **************/
+    /************ Sending updated health to target **************/
 
     // Register peer
     memcpy(peerInfo.peer_addr, slaveMACAddress, 6);
@@ -236,11 +233,11 @@ int recvData()
     return 1;
   }
 
-    return 0;
+  return 0;
 }
 
 void setup() {
-  //Initialize Serial Monitor
+  
   Serial.begin(9600);
   
   //Set device as a Wi-Fi Station
@@ -319,6 +316,8 @@ void loop()
     }
   }
 
+  /* When admin is just sending the data 
+  * but the game is yet to start */
   while(TeamData.go == 0)
   {
     if(recvData())
@@ -326,11 +325,11 @@ void loop()
       if( (TeamData.go == 0) and (TeamData.id == ID))
       {
         Serial.print("Team Name = ");
-        TeamName = TeamData.team_name.substring(0,TeamData.team_name.indexOf(" "));
+        TeamName = TeamData.team_name.substring(0, TeamData.team_name.indexOf(" "));
         Serial.println(TeamName);
 
         Serial.print("Tank Name = ");
-        TankName = TeamData.team_name.substring(TeamData.team_name.indexOf(" "),TeamData.team_name.length());
+        TankName = TeamData.team_name.substring(TeamData.team_name.indexOf(" "), TeamData.team_name.length());
         Serial.println(TankName);
         
         Serial.print("Health Given = ");
@@ -347,12 +346,10 @@ void loop()
         Serial.println(TeamData.time);
 
         Serial.println();
-        delay(200);
-          
 
         /* Updating data on Nextion HMI */
-        SendNextionCommand("time", String(TeamData.time)+" : "+"00");
-        SendNextionCommand("time", String(TeamData.time)+" : "+"00");
+        SendNextionCommand("time", String(TeamData.time) + " : " + "00");
+        SendNextionCommand("time", String(TeamData.time) + " : " + "00");
         SendNextionCommand("health", String(TeamData.health));
         SendNextionCommand("team", String(TeamName));
         SendNextionCommand("tank", String(TankName));
@@ -370,8 +367,6 @@ void loop()
         {
           Serial.println("Failed to add peer");
         }
-        
-        delay(50);
         
         // Send message via ESP-NOW
         Serial.println("*** Sending the Score now ****");

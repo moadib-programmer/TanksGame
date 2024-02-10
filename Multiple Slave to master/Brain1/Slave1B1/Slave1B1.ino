@@ -4,11 +4,13 @@
 #include <esp_wifi.h>
 
 /* LED's on each target would be connected to PIN 15 */
-#define PIN          15
-#define NUM          9
-#define VOLT_PIN    (34U)
-#define RED_LED     (33U)
-#define BUTTON_PIN    23
+#define PIN               15
+#define NUM               9
+#define VOLT_PIN          (34U)
+#define RED_LED           (33U)
+#define BUTTON_PIN        23
+#define NUMBER_OF_BLINKS  2
+
 /**
  * @brief HIT Brief
  * If 
@@ -16,10 +18,9 @@
  * id = 2, side hit
  * id = 3, back hit
  */
-#define  ID           (1U)
+#define TARGET_ID           (1U)
 #define MIN_SCORE     5
 #define MAX_SCORE     10
-
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM,PIN, NEO_GRB + NEO_KHZ800);
 volatile float Voltage = 0U;
@@ -51,7 +52,6 @@ typedef struct struct_message {
     int Score;    // Score to be sent
 } struct_message;
 
-// Create a struct_message called myData
 struct_message myData;
 
 /************* Data to receive data from brain *************/
@@ -67,13 +67,14 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 }
 
 // callback function that will be executed when data is received
-void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) 
+{
   memcpy(&health, incomingData, sizeof(health));
   Serial.print("Health Received from the brain: ");
   Serial.println(health);
 
   /****************** Setting Neopixel depending on HEALTH *******************/
-  if( (health >= 70) and (health <= 100) )
+  if( (health >= 70) and (health <= 300) )
   {
     /* Setting neopixel to green, if score is between 70 and 100 */
     setneopixel(0, 255, 0);
@@ -94,8 +95,8 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
 }
 
  
-void setup() {
-  // Init Serial Monitor
+void setup() 
+{
   Serial.begin(9600);
 
   // Set device as a Wi-Fi Station
@@ -149,7 +150,7 @@ void targetHitCallback()
   Serial.println("***** TARGET HIT ****** ");
   delay(100);
 
-  for (int i = 0; i <= 2; i++)
+  for (int i = 0; i <= NUMBER_OF_BLINKS ; i++)
   {
     setneopixel(255, 0, 0);
     delay(600);
@@ -169,8 +170,8 @@ void setneopixel(int r, int g, int b)
 
 void loop() 
 {
-  // ID 2 for target 2
-  myData.id = ID;
+  // TARGET_ID 1 for target 1
+  myData.id = TARGET_ID;
   myData.Score = MAX_SCORE;
 
   Voltage = voltMeasure();
@@ -180,7 +181,7 @@ void loop()
   /****** When target is hit ******/
   if(digitalRead(BUTTON_PIN) == 1) 
   {
-    // Blinking RED LED 3 times
+    // Blinking RED LED
     targetHitCallback();
 
     // Send message via ESP-NOW
@@ -199,5 +200,5 @@ void loop()
     }
   }
 
-  delay(100);
+  delay(10);
 }
