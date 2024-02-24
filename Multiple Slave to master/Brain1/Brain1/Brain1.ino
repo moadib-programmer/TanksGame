@@ -112,7 +112,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 // callback function that will be executed when data is received from the slave
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
 {
-  int rcvd_id;
+  // int rcvd_id;
   int rcvd_score;
   
   if(GameEndFlag == 0)
@@ -307,7 +307,7 @@ void loop()
   {
     while(1)
     {
-      Serial.println("*** ALERT: Voltage is down, voltage down ******");
+      // Serial.println("*** ALERT: Voltage is down, voltage down ******");
 
       digitalWrite(RED_LED, HIGH);
       delay(500);
@@ -324,6 +324,8 @@ void loop()
     {
       if( (TeamData.go == 0) and (TeamData.id == ID))
       {
+
+        Serial.println("********** rcvd team tank: " + TeamData.team_name);
         Serial.print("Team Name = ");
         TeamName = TeamData.team_name.substring(0, TeamData.team_name.indexOf(" "));
         Serial.println(TeamName);
@@ -331,7 +333,7 @@ void loop()
         Serial.print("Tank Name = ");
         TankName = TeamData.team_name.substring(TeamData.team_name.indexOf(" "), TeamData.team_name.length());
         Serial.println(TankName);
-        
+         
         Serial.print("Health Given = ");
         Serial.println(TeamData.health);
 

@@ -8,7 +8,7 @@
 
 /***************************** Macros ****************************/
 
-#define BUTTON_PIN       (12U)
+#define BUTTON_PIN      (12U)
 #define MAX_TEAMS       (20U)
 #define VOLT_PIN        (39U)
 #define RED_LED         (34U)
