@@ -149,75 +149,75 @@ Serial.println(" Starting Server ");
 
 server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
 {
-  request->send(200, "text/html", html+dataPage);
+  request->send(200, "text/html", html + html2 + dataPage);
 });
 
-  server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
+server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
+{
+  if(request->hasParam("team1Name", true))
   {
-    if(request->hasParam("team1Name", true))
-    {
-      team1Name = request->getParam("team1Name", true)->value() ;
-      Serial.print("Team1 name received: ");
-      Serial.println(team1Name);
-    }
+    team1Name = request->getParam("team1Name", true)->value() ;
+    Serial.print("Team1 name received: ");
+    Serial.println(team1Name);
+  }
 
-    if(request->hasParam("team2Name", true))
-    {
-      team2Name = request->getParam("team2Name", true)->value() ;
-      Serial.print("Team2 name received: ");
-      Serial.println(team2Name);
-    }
+  if(request->hasParam("team2Name", true))
+  {
+    team2Name = request->getParam("team2Name", true)->value() ;
+    Serial.print("Team2 name received: ");
+    Serial.println(team2Name);
+  }
 
-    if(request->hasParam("tankNum", true))
-    {
-      tankNum = request->getParam("tankNum", true)->value().toInt() ;
-      Serial.print("Number of Tanks: ");
-      Serial.println(tankNum);
-    }
+  if(request->hasParam("tankNum", true))
+  {
+    tankNum = request->getParam("tankNum", true)->value().toInt() ;
+    Serial.print("Number of Tanks: ");
+    Serial.println(tankNum);
+  }
 
-    if(request->hasParam("team1TankNames", true))
-    {
-      team1TankNames = request->getParam("team1TankNames", true)->value() ;
-      Serial.print("Team1 tank names received: ");
-      Serial.println(team1TankNames);
-    }
+  if(request->hasParam("team1TankNames", true))
+  {
+    team1TankNames = request->getParam("team1TankNames", true)->value() ;
+    Serial.print("Team1 tank names received: ");
+    Serial.println(team1TankNames);
+  }
 
-    if(request->hasParam("team2TankNames", true))
-    {
-      team2TankNames = request->getParam("team2TankNames", true)->value();
-      Serial.print("Team2tank Name received: ");
-      Serial.println(team2TankNames);
-    }
+  if(request->hasParam("team2TankNames", true))
+  {
+    team2TankNames = request->getParam("team2TankNames", true)->value();
+    Serial.print("Team2tank Name received: ");
+    Serial.println(team2TankNames);
+  }
 
-    if(request->hasParam("team1TankScores", true))
-    {
-      team1TankScores = request->getParam("team1TankScores", true)->value() ;
-      Serial.print("Team1 tank scores received: ");
-      Serial.println(team1TankScores);
-    }
+  if(request->hasParam("team1TankScores", true))
+  {
+    team1TankScores = request->getParam("team1TankScores", true)->value() ;
+    Serial.print("Team1 tank scores received: ");
+    Serial.println(team1TankScores);
+  }
 
-    if(request->hasParam("team2TankScores", true))
-    {
-      team2TankScores = request->getParam("team2TankScores", true)->value() ;
-      Serial.print("Team2 tank scores received: ");
-      Serial.println(team2TankScores);
-    }
+  if(request->hasParam("team2TankScores", true))
+  {
+    team2TankScores = request->getParam("team2TankScores", true)->value() ;
+    Serial.print("Team2 tank scores received: ");
+    Serial.println(team2TankScores);
+  }
 
-    if(request->hasParam("time", true))
-    {
-      gameTime = request->getParam("time", true)->value().toInt();
-      Serial.print("GameTime received: ");
-      Serial.println(gameTime);
-    }
+  if(request->hasParam("time", true))
+  {
+    gameTime = request->getParam("time", true)->value().toInt();
+    Serial.print("GameTime received: ");
+    Serial.println(gameTime);
+  }
 
-    // ProcessTheData();
+  // ProcessTheData();
 
-    sendDataToBrains();
+  sendDataToBrains();
 
-    delay(1000);
+  delay(1000);
 
-    request->send(200, "text/html", html+startPage);
-  });
+  request->send(200, "text/html", html + html2+  startPage);
+});
 
   /******* User clicks on Start the Game ********/
 
@@ -227,7 +227,7 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
 
     Serial.println("Game is being started");
 
-    scoreHtml += html + scoreHead + String(gameTime) + " minutes</h2>";
+    scoreHtml += html + refreshTag + html2 +  scoreHead + String(gameTime) + " minutes</h2>";
 
     /* Appending Team Names */
     scoreHtml += "<div id='TeamBlock'> <span id='TeamA'>Team " + String(team1Name) + "</span><span id='TeamB'>Team " + String(team2Name) + "</span>";

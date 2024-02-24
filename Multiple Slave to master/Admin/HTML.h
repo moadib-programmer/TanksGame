@@ -6,6 +6,13 @@ String html = R"(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-A-Compatible" content="ie=edge">
+    )";
+
+String refreshTag = R"(
+    <meta http-equiv="refresh" content="10">
+)";
+
+String html2 = R"(
     <title>Document</title>
     <style>
         .button{
