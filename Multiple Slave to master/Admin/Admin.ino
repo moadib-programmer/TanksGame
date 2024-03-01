@@ -21,10 +21,6 @@ uint8_t statusScore = 0u;
 
 String team1Name;
 String team2Name;
-String team1TankNames; 
-String team2TankNames;
-String team1TankScores; 
-String team2TankScores; 
 
 uint16_t gameTime = 0u;
 uint8_t tankNum = 0u; /* Variable to store the team number */
@@ -46,9 +42,7 @@ const char* password = "PASSWORD";
 
 /************************* Function Protoypes ************************/
 int waitForStart();
-void ProcessTheData(void);
-
-
+void SendTheData(void);
 
 double volt_measure()
 {
@@ -73,9 +67,10 @@ StructureOfTeam TeamData;
 /************* Structure to receive data from Brain *************/
 struct StructureOfBrain
 {
-  int counter;
-  int brain_id;
-  int health;
+  unsigned char counter;
+  unsigned char brain_id;
+  unsigned char health;
+  unsigned char tankID;
 };
 
 StructureOfBrain BrainData;
@@ -86,24 +81,45 @@ StructureOfBrain BrainData;
  */
 void sendDataToBrains()
 {
+  unsigned char oddIdCounter = 0;
+  unsigned char evenIdCounter = 0;
+
   Serial.println("*** Sending Data to tanks of both teams ******");
   delay(200);
   Serial.println();
 
-  for(int i = 0; i < tankNum ; i++)
+
+  for(int i = 1; i <= (tankNum * 2); i++)
   {
-    /* Sending Data of each tank of Team 1 */
-    Serial.println("*** Sending Data to the brain of ID : " + String( i + 1 )+ " of team " + team1Name  + "******");
 
-    /* Send the team name, add a space and then add the tank name */
-    TeamData.team_name = team1Name + " " + team1TankNames;
-    TeamData.health = team1TankScores.toInt();
-    TeamData.go = 0U;
-    TeamData.time = gameTime;
-    TeamData.id = i + 1U;
-    radio.write(&TeamData, sizeof(StructureOfTeam));
+      /* 
+      * ID corresponds to the team
+      * ID is odd: team A
+      * ID is even: team B
+      */
+      if(i % 2 == 0)
+      {
+        Serial.println("*** Sending Data to the brain of ID : " + String(i)+ " of team " + team2Name  + "******");
+        TeamData.team_name = team2Name + " " + team2TanksNamesArr[oddIdCounter];
+        TeamData.health = team2TanksScoresArr[oddIdCounter].toInt();
+        Serial.println("\nUpdated Health is " + String(TeamData.health) + " "+ TeamData.team_name);
+        oddIdCounter++;
+      }
+      else
+      {
+        Serial.println("*** Sending Data to the brain of ID : " + String(i)+ " of team " + team1Name  + "******");
+        TeamData.team_name = team1Name + " " + team1TanksNamesArr[evenIdCounter];
+        TeamData.health = team1TanksScoresArr[evenIdCounter].toInt();
+        Serial.println("\nUpdated Health is " + String(TeamData.health) + " "+ TeamData.team_name);
+        evenIdCounter++;
+      }
+      
+      TeamData.go = 0U;
+      TeamData.time = gameTime;
+      TeamData.id = i;
+      radio.write(&TeamData, sizeof(StructureOfTeam));
 
-    delay(500);
+      delay(100);
   }
 
   Serial.println(" Data has been sent to all tanks ");
@@ -111,7 +127,7 @@ void sendDataToBrains()
 
 void setup() 
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
@@ -147,12 +163,14 @@ void setup()
 
 Serial.println(" Starting Server ");
 
+/* Fetching the team information */
 server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
 {
-  request->send(200, "text/html", html + html2 + dataPage);
+  request->send(200, "text/html", html + html2 + teamPage);
 });
 
-server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
+/* Handling the team page */
+server.on("/teamData", HTTP_POST, [](AsyncWebServerRequest *request)
 {
   if(request->hasParam("team1Name", true))
   {
@@ -175,34 +193,6 @@ server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
     Serial.println(tankNum);
   }
 
-  if(request->hasParam("team1TankNames", true))
-  {
-    team1TankNames = request->getParam("team1TankNames", true)->value() ;
-    Serial.print("Team1 tank names received: ");
-    Serial.println(team1TankNames);
-  }
-
-  if(request->hasParam("team2TankNames", true))
-  {
-    team2TankNames = request->getParam("team2TankNames", true)->value();
-    Serial.print("Team2tank Name received: ");
-    Serial.println(team2TankNames);
-  }
-
-  if(request->hasParam("team1TankScores", true))
-  {
-    team1TankScores = request->getParam("team1TankScores", true)->value() ;
-    Serial.print("Team1 tank scores received: ");
-    Serial.println(team1TankScores);
-  }
-
-  if(request->hasParam("team2TankScores", true))
-  {
-    team2TankScores = request->getParam("team2TankScores", true)->value() ;
-    Serial.print("Team2 tank scores received: ");
-    Serial.println(team2TankScores);
-  }
-
   if(request->hasParam("time", true))
   {
     gameTime = request->getParam("time", true)->value().toInt();
@@ -210,12 +200,56 @@ server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
     Serial.println(gameTime);
   }
 
-  // ProcessTheData();
+  String tankPageData = html + html2 +  tankPage0;
+
+  for(uint8_t i = 1; i <= tankNum; i++)
+  {
+    tankPageData += tankPage1 + String(i) + tankPagetank1 + String(i) + tankPage11 + String(i) + tankPagetank2 + String(i) + tankPage12 + String(i) + tankPagetank3 + String(i) + tankPage13 + String(i) + tankPagetank4 + String(i) + tankPage14;
+  }
+
+  tankPageData += tankPage2;
+  request->send(200, "text/html", tankPageData);
+});
+
+/* Handling the tank page */
+server.on("/tankData", HTTP_POST, [](AsyncWebServerRequest *request)
+{
+  for(int i = 1; i <= tankNum; i++)
+  {
+    /* FOR TEAM 1 */
+    if(request->hasParam("tankName" +  String(i) + "1", true))
+    {
+      team1TanksNamesArr[i - 1] = request->getParam("tankName" +  String(i) + "1", true)->value();
+      Serial.println("Team 1 Tank name is: ");
+      Serial.println(team1TanksNamesArr[i - 1]);
+    }
+
+    if(request->hasParam("tankScore" +  String(i) + "1" , true))
+    {
+      team1TanksScoresArr[i - 1] = request->getParam("tankScore" +  String(i) + "1" , true)->value() ;
+      Serial.println("Team 1 Tank score is: ");
+      Serial.println(team1TanksScoresArr[i - 1]);
+    }
+
+    /* FOR TEAM 2 */
+    if(request->hasParam("tankName" +  String(i) + "2" , true))
+    {
+      team2TanksNamesArr[i - 1] = request->getParam("tankName" +  String(i) + "2" , true)->value();
+      Serial.println("Team 2 Tank name is: ");
+      Serial.println(team2TanksNamesArr[i - 1]);
+    }
+
+    if(request->hasParam("tankScore" +  String(i) + "2" , true))
+    {
+      team2TanksScoresArr[i - 1] = request->getParam("tankScore" +  String(i) + "2" , true)->value() ;
+      Serial.println("Team 2 Tank score is: ");
+      Serial.println(team2TanksScoresArr[i - 1]);
+    }
+  }
 
   sendDataToBrains();
 
   delay(1000);
-
   request->send(200, "text/html", html + html2+  startPage);
 });
 
@@ -223,6 +257,8 @@ server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
 
   server.on("/start", HTTP_POST, [](AsyncWebServerRequest *request)
   {
+    static int startFlag = 0;
+
     String scoreHtml;
 
     Serial.println("Game is being started");
@@ -232,16 +268,23 @@ server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request)
     /* Appending Team Names */
     scoreHtml += "<div id='TeamBlock'> <span id='TeamA'>Team " + String(team1Name) + "</span><span id='TeamB'>Team " + String(team2Name) + "</span>";
 
-    /* Appending Tank Name of team 1 */
-    scoreHtml += "<span id='ScoreA'> Tank " + String(team1TankNames) + ": " + String(team1TankScores) + "</span> <span id='ScoreB'> Tank " + String(team2TankNames) + ": " + String(team2TankScores) + "</span></div></body></html>";
+    for (uint8_t i = 0; i < tankNum; i++)
+    {
+      /* Appending Tank Name of team 1 */
+      scoreHtml += "<span id='ScoreA'> Tank " + String(team1TanksNamesArr[i]) + ": " + String(team1TanksScoresArr[i]) + "</span> <span id='ScoreB'> Tank " + String(team2TanksNamesArr[i]) + ": " + String(team2TanksScoresArr[i]) + "</span>";
+    }
 
-    delay(1000);
+    delay(200);
 
-    request->send(200, "text/html", scoreHtml);
-    // statusScore = 1;
-    ProcessTheData();
+    request->send(200, "text/html",  "</div></body></html>" + scoreHtml);
+
+    if(startFlag == 0)
+    {
+      SendTheData();
+      startFlag = 1;
+    }
+
     scoreHtml = " ";
-    
   });
 
   server.begin();
@@ -268,18 +311,28 @@ void loop()
     Serial.print("Packet No. = ");
     Serial.println(BrainData.counter);
     
-    Serial.print("Health = ");
+    Serial.println("Health = ");
     Serial.print(BrainData.health);
-
-    team1TankScores = String(BrainData.health);
-    Serial.println(team1TankScores);
-    
   
-    Serial.print("Brain ID = ");
+    Serial.println("Brain ID = ");
     Serial.print(BrainData.brain_id);
 
-    Serial.println();
+        Serial.println("Tank ID = ");
+    Serial.print(BrainData.tankID);
 
+    // /*
+    // * Brain ID is even for team 2 tanks and odd for team1 tanks.
+    if(BrainData.tankID % 2 == 0)
+    {
+      /*2 as the index is always zero*/
+      team1TanksScoresArr[BrainData.tankID - 2] = BrainData.health;
+    }
+    else
+    {
+      team2TanksScoresArr[BrainData.tankID - 1] = BrainData.health;
+    }
+
+    Serial.println();
   }
 }
 
@@ -292,11 +345,9 @@ void loop()
  * 
  * @return void
 */
-void ProcessTheData(void)
+void SendTheData(void)
 {
-
-      
-    for(int i = 1; i <= tankNum; i++)
+    for(int i = 1; i <= (tankNum * 2); i++)
     {
       TeamData.go = 1;
       
@@ -316,7 +367,7 @@ void ProcessTheData(void)
     Serial.println("Receiver Started....");
 
     radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
-    radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
+    radio.setPALevel(RF24_PA_MAX);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
     radio.startListening();              //This sets the module as receiver
 
     delay(90);

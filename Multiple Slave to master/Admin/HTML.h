@@ -8,14 +8,12 @@ String html = R"(
     <meta http-equiv="X-A-Compatible" content="ie=edge">
     )";
 
-String refreshTag = R"(
-    <meta http-equiv="refresh" content="10">
-)";
+String refreshTag = R"()";
 
 String html2 = R"(
     <title>Document</title>
     <style>
-        .button{
+        .button{  SADFSA
           color: white; 
           background-color: green; 
           width : 130px; 
@@ -100,10 +98,10 @@ String html2 = R"(
 )";
 
 
-String dataPage = R"(
+String teamPage = R"(
 <body>
-    <h1>Data Input</h1>
-    <form action='/save' method='post'>
+    <h1>Team Information</h1>
+    <form action='/teamData' method='post'>
 
         <label style="font-size: 20px;" for="time">Enter Game Time</label>
         <div>
@@ -129,34 +127,71 @@ String dataPage = R"(
         </div>
         <br>
 
-        <label style="font-size: 20px;" for="team1TankNames">Enter Team 1 Tank names (seperated by ,)</label>
-        <div>
-            <input type="text" name="team1TankNames" required>
-        </div>
-        <br>
-
-        <label style="font-size: 20px;" for="team1TankScores">Enter Team 1 Tank Scores  (seperated by ,)</label>
-        <div>
-            <input type="text" name="team1TankScores" required>
-        </div>
-        <br>
-
-        <label style="font-size: 20px;" for="team2TankNames">Enter Team 2 Tank names(seperated by ,)</label>
-        <div>
-            <input type="text" name="team2TankNames" required>
-        </div>
-        <br>
-
-        <label style="font-size: 20px;" for="team2TankScores">Enter Team 2 Tank Scores  (seperated by ,)</label>
-        <div>
-            <input type="text" name="team2TankScores" required>
-        </div>
-        <br>
-
         <div  id="submitButton">
             <input class="button" style="background-color:  black;" type="submit" value="Send">
         </div>
         
+    </form>
+</body>
+</html>
+)";
+
+String tankPage0 = 
+R"(
+<body>
+    <h1>Tank Information</h1>
+    <form action='/tankData' method='post'>
+)";
+
+String tankPage1 = 
+R"(
+    <label style="font-size: 20px;" for="tankName11">Enter the Name of tank  )";  
+
+String tankPagetank1 = R"( (Team 1)</label>
+    <div>
+        <input type="text" name="tankName)";
+
+String tankPage11 = 
+R"(1" required>
+    </div>
+    <br>
+
+    <label style="font-size: 20px;" for="tankScore11">Enter the Score of tank  )";  
+
+String tankPagetank2 = R"( (Team 1)</label>
+    <div>
+        <input type="text" name="tankScore)";  
+
+String tankPage12 = R"(1" required>
+    </div>
+    <br>
+    
+    <label style="font-size: 20px;" for="tankName12">Enter the Name of tank  )";  
+
+String tankPagetank3 = R"( (Team 2)</label>
+    <div>
+        <input type="text" name="tankName)";  
+
+String tankPage13 = R"(2" required>
+    </div>
+    <br>
+
+    <label style="font-size: 20px;" for="tankScore12">Enter the Score of tank  )";  
+
+String tankPagetank4 = R"( (Team 2)</label>
+    <div>
+        <input type="text" name="tankScore)";  
+
+String tankPage14 = R"(2" required>
+    </div>
+    <br>
+)";
+
+String tankPage2 =
+R"(
+        <div  id="submitButton">
+            <input class="button" style="background-color:  black;" type="submit" value="Send">
+        </div>
     </form>
 </body>
 </html>

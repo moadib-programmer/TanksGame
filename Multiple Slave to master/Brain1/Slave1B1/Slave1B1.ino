@@ -25,17 +25,9 @@
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM,PIN, NEO_GRB + NEO_KHZ800);
 volatile float Voltage = 0U;
 // Set your new MAC Address
-uint8_t newMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB1, 0x01};
+uint8_t newMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB2, 0x01};
 
-/* Replace with Receiver's MAC Address 
-brain 1:
-78:21:84:C7:05:38
-
-brain 2:
-70:B8:F6:5B:F8:B8
-*/
-
-uint8_t broadcastAddress[] = {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x01};
+uint8_t broadcastAddress[] = {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x02};
 
 double voltMeasure()
 {

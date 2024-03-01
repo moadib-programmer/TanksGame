@@ -8,6 +8,7 @@
  
 /* ID of this Brain */
 #define ID          (1U)
+#define TANK_ID     (2U)
 #define GREEN_LED   (27U)
 
 #define VOLT_PIN    (34U)
@@ -33,16 +34,16 @@ volatile float Voltage = 0U;
 	0x01  (Slave Number i.e 0x01,0x02, 0x03....)
 	
  For Brain Address only iterate the last member of the Brain as:
-	0xB1 for brain 1
-	0xB2 for brain 2
+	0x01 for brain 1
+	0x02 for brain 2
 	and so on.............
 */
 
 // MAC addresses of slave to which score is needed to be sent.
-uint8_t slaveMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB1, 0x01};
+uint8_t slaveMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB2, 0x01};
 
-// Set your new MAC Address
-uint8_t newMACAddress[] =  {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x01};
+// New mac address of Brain to communicate with salve via ESP NOW
+uint8_t newMACAddress[] =  {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x02};
 
 /**
  * @brief HIT Brief
@@ -78,9 +79,10 @@ StructureOfTeam TeamData;
 /************* Structure to send data to Admin *************/
 struct StructureOfBrain
 {
-  int counter;
-  int brain_id;
-  int health;
+  unsigned char counter;
+  unsigned char brain_id;
+  unsigned char health;
+  unsigned char tankID;
 };
 
 StructureOfBrain BrainData;
@@ -114,6 +116,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
 {
   // int rcvd_id;
   int rcvd_score;
+  Serial.println("Score received from the admin");
   
   if(GameEndFlag == 0)
   {
@@ -170,7 +173,8 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
 
     BrainData.counter = counter;
     BrainData.health = Final_Score;
-    BrainData.brain_id = ID;
+    BrainData.brain_id = 1;
+    BrainData.tankID = TANK_ID;
     
     Serial.println(" ");
     Serial.print("Packet No. = ");
@@ -183,10 +187,12 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     Serial.print(BrainData.brain_id);
   
     Serial.println(" ");
+    delay(100);
     
     radio.write(&BrainData, sizeof(StructureOfBrain));
     
     Serial.println("Data Packet Sent");
+
     Serial.println("");
     
     counter++;
@@ -343,7 +349,7 @@ void loop()
         Serial.print("GO = ");
         Serial.println(TeamData.go);
 
-        Serial.print("Time in Seconds = ");
+        Serial.print("Time in Minutes = ");
         TotalTime = TeamData.time * 60;
         Serial.println(TeamData.time);
 
