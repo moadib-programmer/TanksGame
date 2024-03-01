@@ -325,11 +325,11 @@ void loop()
     if(BrainData.tankID % 2 == 0)
     {
       /*2 as the index is always zero*/
-      team1TanksScoresArr[BrainData.tankID - 2] = BrainData.health;
+      team2TanksScoresArr[BrainData.tankID - 2] = BrainData.health;
     }
     else
     {
-      team2TanksScoresArr[BrainData.tankID - 1] = BrainData.health;
+      team1TanksScoresArr[BrainData.tankID - 1] = BrainData.health;
     }
 
     Serial.println();
@@ -346,23 +346,20 @@ void loop()
  * @return void
 */
 void SendTheData(void)
-{
-    for(int i = 1; i <= (tankNum * 2); i++)
-    {
-      TeamData.go = 1;
-      
-      /* ID of slaves */
-      TeamData.id = i; 
+{ 
+    TeamData.go = 1;
+    
+    /* ID of slaves */
+    TeamData.id = 1; 
 
-      /* Starting the game */
-      Serial.println(" >>>> Starting the Game Now: <<<< ");
-      radio.write(&TeamData, sizeof(StructureOfTeam));
+    /* Starting the game */
+    Serial.println(" >>>> Starting the Game Now: <<<< ");
+    radio.write(&TeamData, sizeof(StructureOfTeam));
 
-      Serial.println("Data Packet Sent");
-      Serial.println("");
+    Serial.println("Data Packet Sent");
+    Serial.println("");
 
-      delay(500);
-    }
+    delay(50);
   
     Serial.println("Receiver Started....");
 

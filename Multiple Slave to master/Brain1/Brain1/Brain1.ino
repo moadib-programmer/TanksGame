@@ -7,8 +7,8 @@
 #include <RF24.h>
  
 /* ID of this Brain */
-#define ID          (1U)
-#define TANK_ID     (2U)
+#define ID          1
+#define TANK_ID     1
 #define GREEN_LED   (27U)
 
 #define VOLT_PIN    (34U)
@@ -40,10 +40,10 @@ volatile float Voltage = 0U;
 */
 
 // MAC addresses of slave to which score is needed to be sent.
-uint8_t slaveMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB2, 0x01};
+uint8_t slaveMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB1, 0x01};
 
 // New mac address of Brain to communicate with salve via ESP NOW
-uint8_t newMACAddress[] =  {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x02};
+uint8_t newMACAddress[] =  {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x01};
 
 /**
  * @brief HIT Brief
@@ -328,7 +328,7 @@ void loop()
   {
     if(recvData())
     {
-      if( (TeamData.go == 0) and (TeamData.id == ID))
+      if( (TeamData.go == 0) and (TeamData.id == TANK_ID))
       {
 
         Serial.println("********** rcvd team tank: " + TeamData.team_name);
@@ -390,7 +390,7 @@ void loop()
         }
       }
 
-      if((TeamData.go) and (TeamData.id == ID))
+      if((TeamData.go))
       {
         SendNextionCommand("start", String("3"));
         delay(1000);
