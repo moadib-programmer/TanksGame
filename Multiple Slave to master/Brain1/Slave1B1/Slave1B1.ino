@@ -8,7 +8,7 @@
 #define NUM               9
 #define VOLT_PIN          (34U)
 #define RED_LED           (33U)
-#define BUTTON_PIN        23
+#define BUTTON_PIN        21
 #define NUMBER_OF_BLINKS  2
 
 /**
@@ -128,7 +128,7 @@ void setup()
   }
 
   Serial.println("******* Setting the LED to GREEN ********");
-  pinMode(BUTTON_PIN,INPUT);
+  pinMode(BUTTON_PIN,INPUT_PULLDOWN);
   
   pixels.begin();
 

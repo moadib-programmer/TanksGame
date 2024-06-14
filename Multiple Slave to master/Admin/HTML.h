@@ -8,12 +8,12 @@ String html = R"(
     <meta http-equiv="X-A-Compatible" content="ie=edge">
     )";
 
-String refreshTag = R"()";
+String refreshTag = " ";
 
 String html2 = R"(
     <title>Document</title>
     <style>
-        .button{  SADFSA
+        .button{
           color: white; 
           background-color: green; 
           width : 130px; 

@@ -259,6 +259,7 @@ void setup() {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
+
   
   // Once ESPNow is successfully Init, we will register for recv CB to
   // get recv packer info
@@ -274,13 +275,13 @@ void setup() {
   radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
   radio.startListening();              //This sets the module as receiver
 
-  pinMode(GREEN_LED, OUTPUT);
-  digitalWrite(GREEN_LED, LOW);
+  // pinMode(GREEN_LED, OUTPUT);
+  // digitalWrite(GREEN_LED, LOW);
 
-  pinMode(RED_LED, OUTPUT);
-  digitalWrite(RED_LED, LOW);
+  // pinMode(RED_LED, OUTPUT);
+  // digitalWrite(RED_LED, LOW);
 
-  pinMode(VOLT_PIN, INPUT);
+  // pinMode(VOLT_PIN, INPUT);
 
   SendNextionCommand("start", String(" "));
   SendNextionCommand("start", String(" "));
@@ -292,6 +293,10 @@ void SendNextionCommand(String object, String msg)
   String command = "";
   command = object+".txt=\""+String(msg)+"\"";
   Serial.print(command);
+  /**
+   * Put a delauy here for the Nextion display and confirm the 
+   * availability of the Nextion buffer.
+  */
 
   Serial.write(0xff);
   Serial.write(0xff);
@@ -302,25 +307,25 @@ void SendNextionCommand(String object, String msg)
 
 void loop() 
 {
-  Voltage = volt_measure();
+  // Voltage = volt_measure();
 
-  Serial.println("Voltage is: " + String(Voltage));
+  // Serial.println("Voltage is: " + String(Voltage));
 
-  SendNextionCommand("t5",String(Voltage));
-  SendNextionCommand("t5", String(Voltage));
+  // SendNextionCommand("t5",String(Voltage));
+  // SendNextionCommand("t5", String(Voltage));
 
-  if(Voltage <= 3)
-  {
-    while(1)
-    {
-      // Serial.println("*** ALERT: Voltage is down, voltage down ******");
+  // if(Voltage <= 3)
+  // {
+  //   while(1)
+  //   {
+  //     // Serial.println("*** ALERT: Voltage is down, voltage down ******");
 
-      digitalWrite(RED_LED, HIGH);
-      delay(500);
-      digitalWrite(RED_LED, LOW);
-      delay(500);
-    }
-  }
+  //     digitalWrite(RED_LED, HIGH);
+  //     delay(500);
+  //     digitalWrite(RED_LED, LOW);
+  //     delay(500);
+  //   }
+  // }
 
   /* When admin is just sending the data 
   * but the game is yet to start */
