@@ -10,6 +10,7 @@
 #define RED_LED           (33U)
 #define BUTTON_PIN        21
 #define NUMBER_OF_BLINKS  2
+#define GREEN_LED       35
 
 /**
  * @brief HIT Brief
@@ -106,8 +107,14 @@ void setup()
 
   pinMode(RED_LED, OUTPUT);
   digitalWrite(RED_LED, LOW);
+  pinMode(GREEN_LED, OUTPUT);
 
-  pinMode(VOLT_PIN, INPUT);
+  // pinMode(VOLT_PIN, INPUT);
+
+    /* Turning Green LED ON for a time */
+  digitalWrite(GREEN_LED, 1);
+  delay(2000);
+  digitalWrite(GREEN_LED, 0);
 
   /**
    * Register Datasend and Datarcv callback functions 

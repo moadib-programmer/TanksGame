@@ -9,10 +9,10 @@
 /* ID of this Brain */
 #define ID          1
 #define TANK_ID     1
-#define GREEN_LED   (27U)
 
 #define VOLT_PIN    (34U)
 #define RED_LED     (33U)
+#define GREEN_LED    35
 
 void SendNextionCommand(String object, String msg);
 
@@ -230,7 +230,6 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
 
 }
  
- 
 int recvData()
 {
   if ( radio.available() ) 
@@ -280,6 +279,12 @@ void setup() {
 
   // pinMode(RED_LED, OUTPUT);
   // digitalWrite(RED_LED, LOW);
+  pinMode(GREEN_LED, OUTPUT);
+
+  /* Turning Green LED ON for a time */
+  digitalWrite(GREEN_LED, 1);
+  delay(2000);
+  digitalWrite(GREEN_LED, 0);
 
   // pinMode(VOLT_PIN, INPUT);
 

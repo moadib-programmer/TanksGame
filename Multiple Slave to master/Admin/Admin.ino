@@ -8,10 +8,11 @@
 
 /***************************** Macros ****************************/
 
-#define BUTTON_PIN      (12U)
-#define MAX_TEAMS       (20U)
-#define VOLT_PIN        (39U)
-#define RED_LED         (34U)
+#define BUTTON_PIN      (12)
+#define MAX_TEAMS       (20)
+#define VOLT_PIN        (39)
+#define RED_LED         (34)
+#define GREEN_LED       35
 
 /***************************** Variables ****************************/
 RF24 radio(4, 5); 
@@ -128,6 +129,8 @@ void sendDataToBrains()
 void setup() 
 {
   Serial.begin(9600);
+  pinMode(BUTTON_PIN, INPUT);
+  pinMode(GREEN_LED, OUTPUT);
 
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
@@ -145,10 +148,13 @@ void setup()
   Serial.println("WiFi connected.");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+
+  /* Turning Green LED ON for a time */
+  digitalWrite(GREEN_LED, 1);
+  delay(2000);
+  digitalWrite(GREEN_LED, 0);
    
   radio.begin();
-
-  pinMode(BUTTON_PIN, INPUT);
   
   Serial.println("Transmitter started....");
   radio.openWritingPipe(address); 
