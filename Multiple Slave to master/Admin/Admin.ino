@@ -3,8 +3,7 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-#include <ESPAsyncWebServer.h>
-#include <HTTPClient.h>
+#include <WebServer.h>
 #include "HTML.h"
 
 /***************************** Macros ****************************/
@@ -21,7 +20,7 @@
 
 /***************************** Globals ****************************/
 RF24 radio(4, 5); 
-AsyncWebServer server(80);
+WebServer server(80);
 uint8_t statusSave = 0u;
 uint8_t statusScore = 0u;
 
@@ -54,7 +53,6 @@ double volt_measure()
   double voltage = map(volt,0, 3000, 0, 7.4);// map 0-1023 to 0-2500 and add correction offset
   return voltage + 0.5;
 }
-
 /************* Structure to send data to Brain *************/
 
 struct StructureOfTeam
@@ -130,27 +128,122 @@ void sendDataToBrains()
   Serial.println(" Data has been sent to all tanks ");
 }
 
-void sendRequest() 
+void handleRoot() 
 {
-    HTTPClient http;
+  server.send(200, "text/html", html + html2 + teamPage);
+}
 
-    http.begin("192.168.174.77/start");
+void handleTeamData() 
+{
+  if (server.hasArg("team1Name")) 
+  {
+    team1Name = server.arg("team1Name");
+    Serial.print("Team1 name received: ");
+    Serial.println(team1Name);
+  }  
+  if (server.hasArg("team2Name")) 
+  {
+    team2Name = server.arg("team2Name");
+    Serial.print("Team2 name received: ");
+    Serial.println(team2Name);
+  }  
+  if (server.hasArg("tankNum")) 
+  {
+    tankNum = server.arg("tankNum").toInt();
+    Serial.print("Number of Tanks: ");
+    Serial.println(tankNum);
+  }  
+  if (server.hasArg("time")) 
+  {
+    gameTime = server.arg("time").toInt();
+    Serial.print("GameTime received: ");
+    Serial.println(gameTime);
+  }  
 
-    int httpResponseCode = http.GET();
+  String tankPageData = html + html2 +  tankPage0;
 
-    if (httpResponseCode > 0) 
+  for(uint8_t i = 1; i <= tankNum; i++)
+  {
+    tankPageData += tankPage1 + String(i) + tankPagetank1 + String(i) + tankPage11 + String(i) + tankPagetank2 + String(i) + tankPage12 + String(i) + tankPagetank3 + String(i) + tankPage13 + String(i) + tankPagetank4 + String(i) + tankPage14;
+  }
+
+  tankPageData += tankPage2;
+  server.send(200, "text/html", tankPageData);
+
+}
+
+void handleTankData() 
+{
+  for(int i = 1; i <= tankNum; i++)
+  {
+    /* FOR TEAM 1 */
+    if(server.hasArg("tankName" +  String(i) + "1"))
     {
-      String response = http.getString();
-      Serial.println(httpResponseCode);
-      Serial.println(response);
-    } 
-    else 
-    {
-      Serial.print("Error on sending request: ");
-      Serial.println(httpResponseCode);
+      team1TanksNamesArr[i - 1] = server.arg("tankName" +  String(i) + "1");
+      Serial.println("Team 1 Tank name is: ");
+      Serial.println(team1TanksNamesArr[i - 1]);
     }
 
-    http.end();
+    if(server.hasArg("tankScore" +  String(i) + "1"))
+    {
+      team1TanksScoresArr[i - 1] = server.arg("tankScore" +  String(i) + "1");
+      Serial.println("Team 1 Tank score is: ");
+      Serial.println(team1TanksScoresArr[i - 1]);
+    }
+
+    /* FOR TEAM 2 */
+    if(server.hasArg("tankName" +  String(i) + "2"))
+    {
+      team2TanksNamesArr[i - 1] = server.arg("tankName" +  String(i) + "2");
+      Serial.println("Team 2 Tank name is: ");
+      Serial.println(team2TanksNamesArr[i - 1]);
+    }
+
+    if(server.hasArg("tankScore" +  String(i) + "2"))
+    {
+      team2TanksScoresArr[i - 1] = server.arg("tankScore" +  String(i) + "2");
+      Serial.println("Team 2 Tank score is: ");
+      Serial.println(team2TanksScoresArr[i - 1]);
+    }
+  }
+
+  sendDataToBrains();
+
+  delay(500);
+  server.send(200, "text/html", html + html2+  startPage);
+}
+
+void handleStart() 
+{
+    static int startFlag = 0;
+
+    String scoreHtml;
+
+    Serial.println("Game is being started");
+
+    scoreHtml += html + refreshTag + html2 +  scoreHead + String(gameTime) + " minutes</h2>";
+
+    /* Appending Team Names */
+    scoreHtml += "<div id='TeamBlock'> <span id='TeamA'>Team " + String(team1Name) + "</span><span id='TeamB'>Team " + String(team2Name) + "</span>";
+
+    for (uint8_t i = 0; i < tankNum; i++)
+    {
+      /* Appending Tank Name of team 1 */
+      scoreHtml += "<span id='ScoreA'> Tank " + String(team1TanksNamesArr[i]) + ": " + String(team1TanksScoresArr[i]) + "</span> <span id='ScoreB'> Tank " + String(team2TanksNamesArr[i]) + ": " + String(team2TanksScoresArr[i]) + "</span>";
+    }
+
+    delay(50);
+
+    server.send(200, "text/html",  "</div></body></html>" + scoreHtml);
+
+    if(startFlag == 0)
+    {
+      SendTheData();
+      startFlag = 1;
+    }
+
+    scoreHtml = " "; 
+
 }
 
 void setup() 
@@ -196,129 +289,10 @@ void setup()
 
 Serial.println(" Starting Server ");
 
-/* Fetching the team information */
-server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-{
-  request->send(200, "text/html", html + html2 + teamPage);
-});
-
-/* Handling the team page */
-server.on("/teamData", HTTP_POST, [](AsyncWebServerRequest *request)
-{
-  if(request->hasParam("team1Name", true))
-  {
-    team1Name = request->getParam("team1Name", true)->value() ;
-    Serial.print("Team1 name received: ");
-    Serial.println(team1Name);
-  }
-
-  if(request->hasParam("team2Name", true))
-  {
-    team2Name = request->getParam("team2Name", true)->value() ;
-    Serial.print("Team2 name received: ");
-    Serial.println(team2Name);
-  }
-
-  if(request->hasParam("tankNum", true))
-  {
-    tankNum = request->getParam("tankNum", true)->value().toInt() ;
-    Serial.print("Number of Tanks: ");
-    Serial.println(tankNum);
-  }
-
-  if(request->hasParam("time", true))
-  {
-    gameTime = request->getParam("time", true)->value().toInt();
-    Serial.print("GameTime received: ");
-    Serial.println(gameTime);
-  }
-
-  String tankPageData = html + html2 +  tankPage0;
-
-  for(uint8_t i = 1; i <= tankNum; i++)
-  {
-    tankPageData += tankPage1 + String(i) + tankPagetank1 + String(i) + tankPage11 + String(i) + tankPagetank2 + String(i) + tankPage12 + String(i) + tankPagetank3 + String(i) + tankPage13 + String(i) + tankPagetank4 + String(i) + tankPage14;
-  }
-
-  tankPageData += tankPage2;
-  request->send(200, "text/html", tankPageData);
-});
-
-/* Handling the tank page */
-server.on("/tankData", HTTP_POST, [](AsyncWebServerRequest *request)
-{
-  for(int i = 1; i <= tankNum; i++)
-  {
-    /* FOR TEAM 1 */
-    if(request->hasParam("tankName" +  String(i) + "1", true))
-    {
-      team1TanksNamesArr[i - 1] = request->getParam("tankName" +  String(i) + "1", true)->value();
-      Serial.println("Team 1 Tank name is: ");
-      Serial.println(team1TanksNamesArr[i - 1]);
-    }
-
-    if(request->hasParam("tankScore" +  String(i) + "1" , true))
-    {
-      team1TanksScoresArr[i - 1] = request->getParam("tankScore" +  String(i) + "1" , true)->value() ;
-      Serial.println("Team 1 Tank score is: ");
-      Serial.println(team1TanksScoresArr[i - 1]);
-    }
-
-    /* FOR TEAM 2 */
-    if(request->hasParam("tankName" +  String(i) + "2" , true))
-    {
-      team2TanksNamesArr[i - 1] = request->getParam("tankName" +  String(i) + "2" , true)->value();
-      Serial.println("Team 2 Tank name is: ");
-      Serial.println(team2TanksNamesArr[i - 1]);
-    }
-
-    if(request->hasParam("tankScore" +  String(i) + "2" , true))
-    {
-      team2TanksScoresArr[i - 1] = request->getParam("tankScore" +  String(i) + "2" , true)->value() ;
-      Serial.println("Team 2 Tank score is: ");
-      Serial.println(team2TanksScoresArr[i - 1]);
-    }
-  }
-
-  sendDataToBrains();
-
-  delay(1000);
-  request->send(200, "text/html", html + html2+  startPage);
-});
-
-  /******* User clicks on Start the Game or Fetch score Button ********/
-
-  server.on("/start", HTTP_POST, [](AsyncWebServerRequest *request)
-  {
-    static int startFlag = 0;
-
-    String scoreHtml;
-
-    Serial.println("Game is being started");
-
-    scoreHtml += html + refreshTag + html2 +  scoreHead + String(gameTime) + " minutes</h2>";
-
-    /* Appending Team Names */
-    scoreHtml += "<div id='TeamBlock'> <span id='TeamA'>Team " + String(team1Name) + "</span><span id='TeamB'>Team " + String(team2Name) + "</span>";
-
-    for (uint8_t i = 0; i < tankNum; i++)
-    {
-      /* Appending Tank Name of team 1 */
-      scoreHtml += "<span id='ScoreA'> Tank " + String(team1TanksNamesArr[i]) + ": " + String(team1TanksScoresArr[i]) + "</span> <span id='ScoreB'> Tank " + String(team2TanksNamesArr[i]) + ": " + String(team2TanksScoresArr[i]) + "</span>";
-    }
-
-    delay(50);
-
-    request->send(200, "text/html",  "</div></body></html>" + scoreHtml);
-
-    if(startFlag == 0)
-    {
-      SendTheData();
-      startFlag = 1;
-    }
-
-    scoreHtml = " "; 
-  });
+  server.on("/", HTTP_GET, handleRoot);
+  server.on("/tankData", HTTP_POST, handleTankData);
+  server.on("/teamData", HTTP_POST, handleTeamData);
+  server.on("/start", HTTP_POST, handleStart);
 
   server.begin();
 
@@ -337,39 +311,9 @@ int recvData()
 
 void loop()
 {
-  delay(50);
-  
-  server.on("/start", HTTP_POST, [](AsyncWebServerRequest *request)
-  {
-    static int startFlag = 0;
+  delay(5);
 
-    String scoreHtml;
-
-    Serial.println("Game is being started");
-
-    scoreHtml += html + refreshTag + html2 +  scoreHead + String(gameTime) + " minutes</h2>";
-
-    /* Appending Team Names */
-    scoreHtml += "<div id='TeamBlock'> <span id='TeamA'>Team " + String(team1Name) + "</span><span id='TeamB'>Team " + String(team2Name) + "</span>";
-
-    for (uint8_t i = 0; i < tankNum; i++)
-    {
-      /* Appending Tank Name of team 1 */
-      scoreHtml += "<span id='ScoreA'> Tank " + String(team1TanksNamesArr[i]) + ": " + String(team1TanksScoresArr[i]) + "</span> <span id='ScoreB'> Tank " + String(team2TanksNamesArr[i]) + ": " + String(team2TanksScoresArr[i]) + "</span>";
-    }
-
-    delay(50);
-
-    request->send(200, "text/html",  "</div></body></html>" + scoreHtml);
-
-    if(startFlag == 0)
-    {
-      SendTheData();
-      startFlag = 1;
-    }
-
-    scoreHtml = " "; 
-  });
+  server.handleClient();
 
   if(recvData())
   {
