@@ -4,17 +4,22 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 #include <ESPAsyncWebServer.h>
+#include <HTTPClient.h>
 #include "HTML.h"
 
 /***************************** Macros ****************************/
 
-#define BUTTON_PIN      (12)
-#define MAX_TEAMS       (20)
-#define VOLT_PIN        (39)
-#define RED_LED         (34)
+#define BUTTON_PIN      12
+#define MAX_TEAMS       20
+#define VOLT_PIN        39
+#define RED_LED         34
 #define GREEN_LED       35
 
-/***************************** Variables ****************************/
+#define NRF_ADDRS       0xF0F0F0F0E1LL
+#define SSID            "SSID"         //replace with your netwrok SSID
+#define PASSWORD        "PASSWORD"     //replace with your netwrok Password
+
+/***************************** Globals ****************************/
 RF24 radio(4, 5); 
 AsyncWebServer server(80);
 uint8_t statusSave = 0u;
@@ -34,12 +39,10 @@ String team2TanksNamesArr[MAX_TEAMS] = {};
 String team1TanksScoresArr[MAX_TEAMS] = {};
 String team2TanksScoresArr[MAX_TEAMS] = {};
 
-const uint64_t address = 0xF0F0F0F0E1LL;
+const uint64_t address = NRF_ADDRS;
 
-// Replace with your network credentials
-const char* ssid = "SSID";
-const char* password = "PASSWORD";
-
+const char* ssid = SSID;
+const char* password = PASSWORD;
 
 /************************* Function Protoypes ************************/
 int waitForStart();
@@ -78,7 +81,8 @@ StructureOfBrain BrainData;
  
  /**
  * @brief Sends the data to the brains
- * 
+ * @param None
+ * @return None
  */
 void sendDataToBrains()
 {
@@ -89,10 +93,8 @@ void sendDataToBrains()
   delay(200);
   Serial.println();
 
-
   for(int i = 1; i <= (tankNum * 2); i++)
   {
-
       /* 
       * ID corresponds to the team
       * ID is odd: team A
@@ -100,6 +102,7 @@ void sendDataToBrains()
       */
       if(i % 2 == 0)
       {
+        /* for Team B */
         Serial.println("*** Sending Data to the brain of ID : " + String(i)+ " of team " + team2Name  + "******");
         TeamData.team_name = team2Name + " " + team2TanksNamesArr[oddIdCounter];
         TeamData.health = team2TanksScoresArr[oddIdCounter].toInt();
@@ -108,12 +111,13 @@ void sendDataToBrains()
       }
       else
       {
+        /* for Team A */
         Serial.println("*** Sending Data to the brain of ID : " + String(i)+ " of team " + team1Name  + "******");
         TeamData.team_name = team1Name + " " + team1TanksNamesArr[evenIdCounter];
         TeamData.health = team1TanksScoresArr[evenIdCounter].toInt();
         Serial.println("\nUpdated Health is " + String(TeamData.health) + " "+ TeamData.team_name);
         evenIdCounter++;
-      }
+      } 
       
       TeamData.go = 0U;
       TeamData.time = gameTime;
@@ -126,6 +130,29 @@ void sendDataToBrains()
   Serial.println(" Data has been sent to all tanks ");
 }
 
+void sendRequest() 
+{
+    HTTPClient http;
+
+    http.begin("192.168.174.77/start");
+
+    int httpResponseCode = http.GET();
+
+    if (httpResponseCode > 0) 
+    {
+      String response = http.getString();
+      Serial.println(httpResponseCode);
+      Serial.println(response);
+    } 
+    else 
+    {
+      Serial.print("Error on sending request: ");
+      Serial.println(httpResponseCode);
+    }
+
+    http.end();
+}
+
 void setup() 
 {
   Serial.begin(9600);
@@ -135,7 +162,7 @@ void setup()
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
   Serial.println(ssid);
-  WiFi.begin(ssid, password);
+  WiFi.begin(ssid, password); 
 
   while (WiFi.status() != WL_CONNECTED) 
   {
@@ -156,10 +183,10 @@ void setup()
    
   radio.begin();
   
-  Serial.println("Transmitter started....");
   radio.openWritingPipe(address); 
   radio.setPALevel(RF24_PA_MIN);  
   radio.stopListening(); 
+  Serial.println("Transmitter started....");
 
 /************************************************************
  *                                                          *
@@ -259,7 +286,7 @@ server.on("/tankData", HTTP_POST, [](AsyncWebServerRequest *request)
   request->send(200, "text/html", html + html2+  startPage);
 });
 
-  /******* User clicks on Start the Game ********/
+  /******* User clicks on Start the Game or Fetch score Button ********/
 
   server.on("/start", HTTP_POST, [](AsyncWebServerRequest *request)
   {
@@ -280,7 +307,7 @@ server.on("/tankData", HTTP_POST, [](AsyncWebServerRequest *request)
       scoreHtml += "<span id='ScoreA'> Tank " + String(team1TanksNamesArr[i]) + ": " + String(team1TanksScoresArr[i]) + "</span> <span id='ScoreB'> Tank " + String(team2TanksNamesArr[i]) + ": " + String(team2TanksScoresArr[i]) + "</span>";
     }
 
-    delay(200);
+    delay(50);
 
     request->send(200, "text/html",  "</div></body></html>" + scoreHtml);
 
@@ -290,7 +317,7 @@ server.on("/tankData", HTTP_POST, [](AsyncWebServerRequest *request)
       startFlag = 1;
     }
 
-    scoreHtml = " ";
+    scoreHtml = " "; 
   });
 
   server.begin();
@@ -310,6 +337,39 @@ int recvData()
 
 void loop()
 {
+  delay(50);
+  
+  server.on("/start", HTTP_POST, [](AsyncWebServerRequest *request)
+  {
+    static int startFlag = 0;
+
+    String scoreHtml;
+
+    Serial.println("Game is being started");
+
+    scoreHtml += html + refreshTag + html2 +  scoreHead + String(gameTime) + " minutes</h2>";
+
+    /* Appending Team Names */
+    scoreHtml += "<div id='TeamBlock'> <span id='TeamA'>Team " + String(team1Name) + "</span><span id='TeamB'>Team " + String(team2Name) + "</span>";
+
+    for (uint8_t i = 0; i < tankNum; i++)
+    {
+      /* Appending Tank Name of team 1 */
+      scoreHtml += "<span id='ScoreA'> Tank " + String(team1TanksNamesArr[i]) + ": " + String(team1TanksScoresArr[i]) + "</span> <span id='ScoreB'> Tank " + String(team2TanksNamesArr[i]) + ": " + String(team2TanksScoresArr[i]) + "</span>";
+    }
+
+    delay(50);
+
+    request->send(200, "text/html",  "</div></body></html>" + scoreHtml);
+
+    if(startFlag == 0)
+    {
+      SendTheData();
+      startFlag = 1;
+    }
+
+    scoreHtml = " "; 
+  });
 
   if(recvData())
   {
@@ -323,22 +383,20 @@ void loop()
     Serial.println("Brain ID = ");
     Serial.print(BrainData.brain_id);
 
-        Serial.println("Tank ID = ");
+    Serial.println("Tank ID = ");
     Serial.print(BrainData.tankID);
 
     // /*
     // * Brain ID is even for team 2 tanks and odd for team1 tanks.
     if(BrainData.tankID % 2 == 0)
     {
-      /*2 as the index is always zero*/
+      /* 2 as the index is always zero*/
       team2TanksScoresArr[BrainData.tankID - 2] = BrainData.health;
     }
     else
     {
       team1TanksScoresArr[BrainData.tankID - 1] = BrainData.health;
     }
-
-    Serial.println();
   }
 }
 
