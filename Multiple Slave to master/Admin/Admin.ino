@@ -277,8 +277,8 @@ void setup()
   radio.begin();
   
   radio.openWritingPipe(address); 
-  radio.setPALevel(RF24_PA_MIN);  
-  radio.stopListening(); 
+  radio.setPALevel(RF24_PA_MIN);
+  radio.stopListening();
   Serial.println("Transmitter started....");
 
 /************************************************************
@@ -292,6 +292,7 @@ Serial.println(" Starting Server ");
   server.on("/", HTTP_GET, handleRoot);
   server.on("/tankData", HTTP_POST, handleTankData);
   server.on("/teamData", HTTP_POST, handleTeamData);
+  server.on("/start", HTTP_GET, handleStart);
   server.on("/start", HTTP_POST, handleStart);
 
   server.begin();

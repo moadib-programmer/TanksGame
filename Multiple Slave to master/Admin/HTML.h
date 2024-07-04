@@ -8,7 +8,7 @@ String html = R"(
     <meta http-equiv="X-A-Compatible" content="ie=edge">
     )";
 
-String refreshTag = " ";
+String refreshTag = R"(<meta http-equiv="refresh" content="5">)";
 
 String html2 = R"(
     <title>Document</title>
