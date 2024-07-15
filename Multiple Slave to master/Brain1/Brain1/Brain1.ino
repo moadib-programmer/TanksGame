@@ -148,28 +148,11 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     SendNextionCommand("health", String(Final_Score));
     SendNextionCommand("health", String(Final_Score));
 
-    /********* Send Hit Status to the Nextion Display **********/
-    switch (rcvSlaveData.id)
-    {
-    case 1:
-      SendNextionCommand("t5", String("FRONT HIT"));
-      SendNextionCommand("t5", String("FRONT HIT"));
-      break;
-    case 2:
-      SendNextionCommand("t5", String("SIDE HIT"));
-      SendNextionCommand("t5", String("SIDE HIT"));
-      break;
-    case 3:
-      SendNextionCommand("t5", String("BACK HIT"));
-      SendNextionCommand("t5", String("BACK HIT"));
-      break;
-    
-    default:
-      break;
-    }
+    /* Send Hit Status to the Nextion Display */
+    SendNextionCommand("t5", String("FRONT HIT"));
+    SendNextionCommand("t5", String("FRONT HIT"));
 
-    
-    /********** Sending data to the admin **************/
+    /* Sending data to the admin */
 
     BrainData.counter = counter;
     BrainData.health = Final_Score;
@@ -190,6 +173,8 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     delay(100);
     
     radio.write(&BrainData, sizeof(StructureOfBrain));
+
+    /*TODO: add the data ack here */
     
     Serial.println("Data Packet Sent");
 
