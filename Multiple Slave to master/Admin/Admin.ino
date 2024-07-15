@@ -38,11 +38,6 @@ String team2TanksNamesArr[MAX_TEAMS] = {};
 String team1TanksScoresArr[MAX_TEAMS] = {};
 String team2TanksScoresArr[MAX_TEAMS] = {};
 
-const uint64_t address = NRF_ADDRS;
-
-const char* ssid = SSID;
-const char* password = PASSWORD;
-
 /************************* Function Protoypes ************************/
 int waitForStart();
 void SendTheData(void);
@@ -252,22 +247,13 @@ void setup()
   pinMode(BUTTON_PIN, INPUT);
   pinMode(GREEN_LED, OUTPUT);
 
-  // Connect to Wi-Fi network with SSID and password
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password); 
+  /* Setting up the access point */
+  Serial.print("Setting AP (Access Point)…");
+  WiFi.softAP(SSID, PASSWORD);
 
-  while (WiFi.status() != WL_CONNECTED) 
-  {
-    delay(500);
-    Serial.print(".");
-  }
-
-  // Print local IP address and start web server
-  Serial.println("");
-  Serial.println("WiFi connected.");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
 
   /* Turning Green LED ON for a time */
   digitalWrite(GREEN_LED, 1);
@@ -276,7 +262,7 @@ void setup()
    
   radio.begin();
   
-  radio.openWritingPipe(address); 
+  radio.openWritingPipe(NRF_ADDRS); 
   radio.setPALevel(RF24_PA_MIN);
   radio.stopListening();
   Serial.println("Transmitter started....");
@@ -289,13 +275,13 @@ void setup()
 
 Serial.println(" Starting Server ");
 
-  server.on("/", HTTP_GET, handleRoot);
-  server.on("/tankData", HTTP_POST, handleTankData);
-  server.on("/teamData", HTTP_POST, handleTeamData);
-  server.on("/start", HTTP_GET, handleStart);
-  server.on("/start", HTTP_POST, handleStart);
+server.on("/", HTTP_GET, handleRoot);
+server.on("/tankData", HTTP_POST, handleTankData);
+server.on("/teamData", HTTP_POST, handleTeamData);
+server.on("/start", HTTP_GET, handleStart);
+server.on("/start", HTTP_POST, handleStart);
 
-  server.begin();
+server.begin();
 
 }
 
@@ -304,6 +290,7 @@ int recvData()
   if ( radio.available() ) 
   {
     radio.read(&BrainData, sizeof(StructureOfBrain));
+
     return 1;
   }
 
@@ -372,7 +359,7 @@ void SendTheData(void)
   
     Serial.println("Receiver Started....");
 
-    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
+    radio.openReadingPipe(0, NRF_ADDRS);   //Setting the address at which we will receive the data
     radio.setPALevel(RF24_PA_MAX);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
     radio.startListening();              //This sets the module as receiver
 
