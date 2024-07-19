@@ -1,37 +1,15 @@
-#include <esp_now.h>
-#include <WiFi.h>
-#include <SPI.h>
-#include <Wire.h>
-#include <nRF24L01.h>
-#include <esp_wifi.h>
-#include <RF24.h>
- 
-/* ID of this Brain */
-#define ID          1
-#define TANK_ID     1
+/************** Includes *****************/
+#include "Brain1.h"
 
-#define VOLT_PIN    (34U)
-#define RED_LED     (33U)
-#define GREEN_LED    35
-
-void SendNextionCommand(String object, String msg);
-
-double volt_measure()
-{
-  volatile int volt = analogRead(VOLT_PIN);// read the input
-  volatile double voltage = map(volt,0, 2600, 0, 7.4);// map 0-1023 to 0-2500 and add correction offset
-  return voltage + 1U;
-}
-
+/************** Globals *****************/
 int GameEndFlag = 0U;
 volatile float Voltage = 0U;
-
 /*
 * Last two members would be different
  
- For Slave Only change the last two members of the slaveMACAddress as follows:
+ For target Only change the last two members of the targetMACAddress as follows:
 	0xB1  (Brain Number) 
-	0x01  (Slave Number i.e 0x01,0x02, 0x03....)
+	0x01  (target Number i.e 0x01,0x02, 0x03....)
 	
  For Brain Address only iterate the last member of the Brain as:
 	0x01 for brain 1
@@ -39,30 +17,18 @@ volatile float Voltage = 0U;
 	and so on.............
 */
 
-// MAC addresses of slave to which score is needed to be sent.
-uint8_t slaveMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB1, 0x01};
 
-// New mac address of Brain to communicate with salve via ESP NOW
-uint8_t newMACAddress[] =  {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x01};
-
-/**
- * @brief HIT Brief
- * If 
- * id = 1, front hit
- * id = 2, side hit
- * id = 3, back hit
- */
-
+uint8_t targetMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB1, 0x01}; // MAC addresses of target to which score is needed to be sent.
+uint8_t newMACAddress[] =  {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x01}; // New mac address of Brain to communicate with salve via ESP NOW
 unsigned long StartTime = 0;
 unsigned long TotalTime = 0;
 unsigned long TimeLeft = 0;
-
-RF24 radio(4, 5); 
 const uint64_t address = 0xF0F0F0F0E1LL;
 int counter = 0;
 
 String TankName = "";
 String TeamName = "";
+RF24 radio(4, 5); 
  
 /************* Structure to receive data from Admin *************/
 struct StructureOfTeam
@@ -87,7 +53,7 @@ struct StructureOfBrain
 
 StructureOfBrain BrainData;
 
-/************* Structure to receive data from Slave *************/
+/************* Structure to receive data from target *************/
 typedef struct StructureOfTargets 
 {
   int id;
@@ -97,13 +63,20 @@ typedef struct StructureOfTargets
 /* Initial Score value */
 int Final_Score = 100;
 
-// Create a StructureOfTargets called rcvSlaveData
-StructureOfTargets rcvSlaveData;
+// Create a StructureOfTargets called rcvTargetData
+StructureOfTargets rcvTargetData;
 
 // Create peer interface
 esp_now_peer_info_t peerInfo;
 
-// callback when data is sent to the slave
+double volt_measure()
+{
+  volatile int volt = analogRead(VOLT_PIN);// read the input
+  volatile double voltage = map(volt,0, 2600, 0, 7.4);// map 0-1023 to 0-2500 and add correction offset
+  return voltage + 1U;
+}
+
+// callback when data is sent to the target
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
 {
   Serial.print("\r\nLast Packet Send Status:\t");
@@ -111,7 +84,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
-// callback function that will be executed when data is received from the slave
+// callback function that will be executed when data is received from the target
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
 {
   // int rcvd_id;
@@ -127,11 +100,11 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     
     Serial.println(macStr);
 
-    memcpy(&rcvSlaveData, incomingData, sizeof(rcvSlaveData));
-    Serial.printf("Target board ID %u: %u bytes\n", rcvSlaveData.id, len);
+    memcpy(&rcvTargetData, incomingData, sizeof(rcvTargetData));
+    Serial.printf("Target board ID %u: %u bytes\n", rcvTargetData.id, len);
 
     // Update the structures with the new incoming data
-    rcvd_score = rcvSlaveData.Score;
+    rcvd_score = rcvTargetData.Score;
     Serial.printf("Score value Received: %d \n", rcvd_score);
 
     /* Check if new score value is less than zero or not */
@@ -187,7 +160,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     /************ Sending updated health to target **************/
 
     // Register peer
-    memcpy(peerInfo.peer_addr, slaveMACAddress, 6);
+    memcpy(peerInfo.peer_addr, targetMACAddress, 6);
     peerInfo.channel = 0;  
     peerInfo.encrypt = false;
     
@@ -201,11 +174,11 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     
     // Send message via ESP-NOW
     Serial.println("*** Sending the Score now ****");
-    esp_err_t result = esp_now_send(slaveMACAddress, (uint8_t *) &Final_Score, sizeof(Final_Score));
+    esp_err_t result = esp_now_send(targetMACAddress, (uint8_t *) &Final_Score, sizeof(Final_Score));
     
     if (result == ESP_OK) 
     {
-      Serial.println("Sent Score to the slave");
+      Serial.println("Sent Score to the target");
     }
     else 
     {
@@ -259,19 +232,12 @@ void setup() {
   radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
   radio.startListening();              //This sets the module as receiver
 
-  // pinMode(GREEN_LED, OUTPUT);
-  // digitalWrite(GREEN_LED, LOW);
-
-  // pinMode(RED_LED, OUTPUT);
-  // digitalWrite(RED_LED, LOW);
   pinMode(GREEN_LED, OUTPUT);
 
   /* Turning Green LED ON for a time */
   digitalWrite(GREEN_LED, 1);
   delay(2000);
   digitalWrite(GREEN_LED, 0);
-
-  // pinMode(VOLT_PIN, INPUT);
 
   SendNextionCommand("start", String(" "));
   SendNextionCommand("start", String(" "));
@@ -297,28 +263,6 @@ void SendNextionCommand(String object, String msg)
 
 void loop() 
 {
-  // Voltage = volt_measure();
-
-  // Serial.println("Voltage is: " + String(Voltage));
-
-  // SendNextionCommand("t5",String(Voltage));
-  // SendNextionCommand("t5", String(Voltage));
-
-  // if(Voltage <= 3)
-  // {
-  //   while(1)
-  //   {
-  //     // Serial.println("*** ALERT: Voltage is down, voltage down ******");
-
-  //     digitalWrite(RED_LED, HIGH);
-  //     delay(500);
-  //     digitalWrite(RED_LED, LOW);
-  //     delay(500);
-  //   }
-  // }
-
-  /* When admin is just sending the data 
-  * but the game is yet to start */
   while(TeamData.go == 0)
   {
     if(recvData())
@@ -360,20 +304,18 @@ void loop()
         SendNextionCommand("start", String(" "));
         SendNextionCommand("start", String(" "));
 
-        // Register peer
-        memcpy(peerInfo.peer_addr, slaveMACAddress, 6);
+        memcpy(peerInfo.peer_addr, targetMACAddress, 6); // Register peer
         peerInfo.channel = 0;  
         peerInfo.encrypt = false;
-        
-        // Add peer        
+                
         if (esp_now_add_peer(&peerInfo) != ESP_OK)
         {
           Serial.println("Failed to add peer");
         }
         
-        // Send message via ESP-NOW
+        /* Sending the score to the targets */
         Serial.println("*** Sending the Score now ****");
-        esp_err_t result = esp_now_send(slaveMACAddress, (uint8_t *) &Final_Score, sizeof(Final_Score));
+        esp_err_t result = esp_now_send(targetMACAddress, (uint8_t *) &Final_Score, sizeof(Final_Score));
         
         if (result == ESP_OK) 
         {
