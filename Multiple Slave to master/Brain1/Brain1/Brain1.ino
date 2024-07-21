@@ -145,11 +145,19 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     Serial.println(" ");
     delay(100);
     
-    radio.write(&BrainData, sizeof(StructureOfBrain));
-
-    /*TODO: add the data ack here */
-    
-    Serial.println("Data Packet Sent");
+    while(1)
+    {
+      if(radio.write(&BrainData, sizeof(StructureOfBrain)))
+      {
+        Serial.println("Data Packet Sent");
+        break;
+      }
+      else
+      {
+        Serial.println("Data packet is not sent trying again in half second ");
+        delay(500);
+      }
+    }
 
     Serial.println("");
     
@@ -346,6 +354,7 @@ void loop()
 
         radio.openWritingPipe(address); //Setting the address where we will send the data
         radio.setPALevel(RF24_PA_MIN);  //You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
+        radio.setAutoAck(true);
         radio.stopListening();          //This sets the module as transmitter
 
         StartTime = millis();
