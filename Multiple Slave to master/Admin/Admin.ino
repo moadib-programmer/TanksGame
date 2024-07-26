@@ -5,6 +5,7 @@
 #include <RF24.h>
 #include <WebServer.h>
 #include "HTML.h"
+#include "Page12.h"
 
 /***************************** Macros ****************************/
 
@@ -27,8 +28,10 @@ uint8_t statusScore = 0u;
 String team1Name;
 String team2Name;
 
-uint16_t gameTime = 0u;
-uint8_t tankNum = 0u; /* Variable to store the team number */
+uint16_t gameTime = 0;
+uint8_t tankNum = 0;
+uint8_t teamNum = 0;  //Number of Teams
+uint8_t hitScore = 0; // Score subtracted when target gets a HIT
 
 /* Array containing team1 and team2 Tanks Names */
 String team1TanksNamesArr[MAX_TEAMS] = {};
@@ -125,6 +128,11 @@ void sendDataToBrains()
 
 void handleRoot() 
 {
+  server.send(200, "text/html", page1);
+}
+
+void handleNew()
+{
   server.send(200, "text/html", html + html2 + teamPage);
 }
 
@@ -147,6 +155,18 @@ void handleTeamData()
     tankNum = server.arg("tankNum").toInt();
     Serial.print("Number of Tanks: ");
     Serial.println(tankNum);
+  }  
+  if (server.hasArg("teamNum")) 
+  {
+    teamNum = server.arg("teamNum").toInt();
+    Serial.print("Number of Teams: ");
+    Serial.println(teamNum);
+  }
+  if (server.hasArg("hitScore")) 
+  {
+    hitScore = server.arg("hitScore").toInt();
+    Serial.print("Points Minus when HIT: ");
+    Serial.println(hitScore);
   }  
   if (server.hasArg("time")) 
   {
@@ -280,6 +300,7 @@ server.on("/tankData", HTTP_POST, handleTankData);
 server.on("/teamData", HTTP_POST, handleTeamData);
 server.on("/start", HTTP_GET, handleStart);
 server.on("/start", HTTP_POST, handleStart);
+server.on("/new", HTTP_GET, handleNew);
 
 server.begin();
 

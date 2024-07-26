@@ -13,6 +13,7 @@
 #define NUMBER_OF_BLINKS  2
 #define GREEN_LED         35
 #define GREEN_ON_TIME_MS  2000
+#define RED_FLASH_TIME_MS 700
 
 /**
  * @brief HIT Brief

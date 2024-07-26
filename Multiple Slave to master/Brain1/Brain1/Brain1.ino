@@ -1,3 +1,16 @@
+/**
+ * Brain.ino
+ * 
+ * This file contatins the important funcitons and declerations for the
+ * brain module of the tanks game to work with.
+ * 
+ * We can add the other function implementations such as the webpage 
+ * estimations as well as the other html tags in the file.
+ * 
+ * This will contain the next generation tags and scoreboards, which we are planning to implement
+ * in the second version.
+*/
+
 /************** Includes *****************/
 #include "Brain1.h"
 
@@ -225,7 +238,6 @@ void setup() {
     return;
   }
 
-  
   // Once ESPNow is successfully Init, we will register for recv CB to
   // get recv packer info
   esp_now_register_recv_cb(OnDataRecv);
@@ -249,7 +261,6 @@ void setup() {
 
   SendNextionCommand("start", String(" "));
   SendNextionCommand("start", String(" "));
-
 }
  
 void SendNextionCommand(String object, String msg)
@@ -266,7 +277,7 @@ void SendNextionCommand(String object, String msg)
   Serial.write(0xff);
   Serial.write(0xff);
 
-  delay(50); 
+  delay(20);
 }
 
 void loop() 
@@ -277,7 +288,6 @@ void loop()
     {
       if( (TeamData.go == 0) and (TeamData.id == TANK_ID))
       {
-
         Serial.println("********** rcvd team tank: " + TeamData.team_name);
         Serial.print("Team Name = ");
         TeamName = TeamData.team_name.substring(0, TeamData.team_name.indexOf(" "));
@@ -365,7 +375,6 @@ void loop()
     }
   }
 
-
   if( ((millis() - StartTime) / 1000) <= TotalTime )
   {
     int minute = 0;
@@ -385,7 +394,6 @@ void loop()
       countdown = String(minute) + " : 0"+ String(seconds);
     }
     
-    
     Serial.println("");
     SendNextionCommand("time", String(countdown));
     SendNextionCommand("time", String(countdown));
@@ -401,7 +409,13 @@ void loop()
 
     /* TODO: Add the ending of game logic here */
     GameEndFlag = 1;
-    while(1);
+    while(1)
+    {
+      digitalWrite(GREEN_LED, HIGH);
+      delay(500);
+      digitalWrite(GREEN_LED, LOW);
+      delay(500);
+    }
   }
 
   delay(500);  

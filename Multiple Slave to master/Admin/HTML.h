@@ -1,4 +1,3 @@
-
 String html = R"(
   <!DOCTYPE html>
 <html lang="en">
@@ -109,9 +108,21 @@ String teamPage = R"(
         </div>
         <br>
 
-        <label style="font-size: 20px;" for="tankNum">Enter the total number of Tanks</label>
+        <label style="font-size: 20px;" for="teamNum">Enter the total number of Teams</label>
+        <div>
+            <input type="text" name="teamNum" required>
+        </div>
+        <br>
+
+        <label style="font-size: 20px;" for="tankNum">Enter the total number of Players per Team</label>
         <div>
             <input type="text" name="tankNum" required>
+        </div>
+        <br>
+
+        <label style="font-size: 20px;" for="hitScore">Points subtracted when HIT </label>
+        <div>
+            <input type="text" name="hitScore" required>
         </div>
         <br>
 

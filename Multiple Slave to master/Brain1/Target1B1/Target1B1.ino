@@ -5,9 +5,9 @@
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM,PIN, NEO_GRB + NEO_KHZ800);
 volatile float Voltage = 0U;
 // Set your new MAC Address
-uint8_t newMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB2, 0x01};
+uint8_t newMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB1, 0x01};
 
-uint8_t broadcastAddress[] = {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x02};
+uint8_t broadcastAddress[] = {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x01};
 
 /******* Structure to send data to the brain ********/
 typedef struct struct_message 
@@ -151,40 +151,27 @@ void setup()
 
 void targetHitCallback()
 {
-  uint8_t sent_flag = 0;
 
   Serial.println("***** TARGET HIT ****** ");
 
   /* Send message via ESP-NOW */
-  while(!sent_flag)
+  Serial.println("*** Sending the Score now ****");
+  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));
+  
+  if (result == ESP_OK) 
   {
-    Serial.println("*** Sending the Score now ****");
-    esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));
-    
-    if (result == ESP_OK) 
-    {
-      Serial.println("Score Sent to the Brain");
-      Serial.println(" ");
-      Serial.println("Awaiting Score results ");
-      
-      sent_flag = 1;
-    }
-    else 
-    {
-      Serial.println("Error sending the data");
-      Serial.println("Trying to send the data again in 0.5 seconds");
-      /*TODO: Add the support for getting the HIT count if someone hits, while the target is trying again to send */
-      delay(500);
-    }
+    Serial.println("Score Sent to the Brain");
+    Serial.println(" ");
+    Serial.println("Awaiting Score results ");
   }
       
   /* Flashing the Red LED */
   for (int i = 0; i <= NUMBER_OF_BLINKS ; i++)
   {
     setneopixel(255, 0, 0);
-    delay(300);
+    delay(RED_FLASH_TIME_MS);
     setneopixel(0, 0, 0);
-    delay(300);
+    delay(RED_FLASH_TIME_MS);
   }
 }
 
@@ -202,10 +189,6 @@ void loop()
   // TARGET_ID 1 for target 1
   myData.id = TARGET_ID;
   myData.Score = MAX_SCORE;
-
-  // Voltage = voltMeasure();
-
-  // Serial.println("Voltage is: " + String(Voltage));
 
   /****** When target is hit ******/
   if(digitalRead(BUTTON_PIN) == 1) 
