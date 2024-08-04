@@ -1,3 +1,15 @@
+/**
+ * @brief This file contains the API's implementation of the Admin side of 
+ * the project. The admin includes the Initiation of WiFI SoftAP and then 
+ * hosting the local webpage. The admin is responsible of taking all of the
+ * input data of the players and the targets. 
+ * 
+ * Then it transmits all of the information to the players which in turn transmits
+ * all of the information to the targets.
+ * 
+ * @author Muhammad Moadib Nasir
+ * 
+*/
 /***************************** Includes ****************************/
 #include <WiFi.h>
 #include <SPI.h>
@@ -5,7 +17,8 @@
 #include <RF24.h>
 #include <WebServer.h>
 #include "HTML.h"
-#include "Page12.h"
+#include "WelcomePage.h"
+#include "InfoPage.h"
 
 /***************************** Macros ****************************/
 
@@ -32,6 +45,7 @@ uint16_t gameTime = 0;
 uint8_t tankNum = 0;
 uint8_t teamNum = 0;  //Number of Teams
 uint8_t hitScore = 0; // Score subtracted when target gets a HIT
+uint8_t targetNum = 0; // number of targets per player
 
 /* Array containing team1 and team2 Tanks Names */
 String team1TanksNamesArr[MAX_TEAMS] = {};
@@ -143,7 +157,13 @@ void handleTeamData()
     team1Name = server.arg("team1Name");
     Serial.print("Team1 name received: ");
     Serial.println(team1Name);
-  }  
+  }
+  if (server.hasArg("targetNum")) 
+  {
+    targetNum = server.arg("targetNum").toInt();
+    Serial.print("Number of Targets: ");
+    Serial.println(targetNum);
+  }
   if (server.hasArg("team2Name")) 
   {
     team2Name = server.arg("team2Name");
@@ -155,7 +175,7 @@ void handleTeamData()
     tankNum = server.arg("tankNum").toInt();
     Serial.print("Number of Tanks: ");
     Serial.println(tankNum);
-  }  
+  }
   if (server.hasArg("teamNum")) 
   {
     teamNum = server.arg("teamNum").toInt();
@@ -175,20 +195,45 @@ void handleTeamData()
     Serial.println(gameTime);
   }  
 
-  String tankPageData = html + html2 +  tankPage0;
+  // String tankPageData = html + html2 +  tankPage0;
 
-  for(uint8_t i = 1; i <= tankNum; i++)
-  {
-    tankPageData += tankPage1 + String(i) + tankPagetank1 + String(i) + tankPage11 + String(i) + tankPagetank2 + String(i) + tankPage12 + String(i) + tankPagetank3 + String(i) + tankPage13 + String(i) + tankPagetank4 + String(i) + tankPage14;
-  }
+  // for(uint8_t i = 1; i <= tankNum; i++)
+  // {
+  //   tankPageData += tankPage1 + String(i) + tankPagetank1 + String(i) + tankPage11 + String(i) + tankPagetank2 + String(i) + tankPage12 + String(i) + tankPagetank3 + String(i) + tankPage13 + String(i) + tankPagetank4 + String(i) + tankPage14;
+  // }
 
-  tankPageData += tankPage2;
-  server.send(200, "text/html", tankPageData);
+  // tankPageData += tankPage2;
+
+
+  /* new logic implementation */
+      String htmlContent = htmlHeader;
+
+    for (int team = 1; team <= teamNum; team++) 
+    {
+        htmlContent += teamFormStart + team + teamFormMid + team + teamFormEnd + team + teamFormEnd2;
+
+        for (int player = 1; player <= tankNum; player++) 
+        {
+            htmlContent += playerFormStart + team + String(player) + playerFormMid + player + playerFormEnd;
+
+            for (int target = 1; target <= targetNum; target++) 
+            {
+                htmlContent += targetInputStart + team + String(player) + String(target) + targetInputMid + target + targetInputEnd;
+            }
+        }
+
+        htmlContent += "</div>"; // Close the form-block div
+    }
+
+    htmlContent += htmlFooter;
+
+  server.send(200, "text/html", htmlContent);
 
 }
 
 void handleTankData() 
 {
+  /* Change the logic for the tank Data as well as the extraction of the arguments */
   for(int i = 1; i <= tankNum; i++)
   {
     /* FOR TEAM 1 */

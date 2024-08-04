@@ -1,3 +1,6 @@
+#ifndef WELCOMEPAGE_H
+#define WELCOMEPAGE_H
+
 String page1 = R"(
   <!DOCTYPE html>
 <html lang="en">
@@ -48,4 +51,5 @@ String page1 = R"(
 </body>
 </html>
 )";
- 
+
+#endif

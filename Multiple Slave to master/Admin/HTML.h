@@ -1,3 +1,6 @@
+#ifndef HTML_H
+#define HTML_H
+
 String html = R"(
   <!DOCTYPE html>
 <html lang="en">
@@ -117,6 +120,12 @@ String teamPage = R"(
         <label style="font-size: 20px;" for="tankNum">Enter the total number of Players per Team</label>
         <div>
             <input type="text" name="tankNum" required>
+        </div>
+        <br>
+
+        <label style="font-size: 20px;" for="targetNum">Enter the total number of Targets per Player</label>
+        <div>
+            <input type="text" name="targetNum" required>
         </div>
         <br>
 
@@ -241,3 +250,4 @@ String scoreHead = R"(
     <h2>Game Time: 
 )";
 
+#endif
