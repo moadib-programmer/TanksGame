@@ -38,6 +38,7 @@ unsigned long TotalTime = 0;
 unsigned long TimeLeft = 0;
 const uint64_t address = 0xF0F0F0F0E1LL;
 int counter = 0;
+uint8_t scoreToBeMinus = 0;
 
 String TankName = "";
 String TeamName = "";
@@ -48,9 +49,12 @@ struct StructureOfTeam
 {
   String team_name;
   int health;
-  unsigned char go = 0;
-  unsigned char time = 0;
-  unsigned char id = 0;
+  uint8_t score_to_be_minus = 0;
+  uint8_t go = 0;
+  uint8_t time = 0;
+  uint8_t id = 0;
+  uint8_t target_num = 0;
+  uint8_t targetScores[MAX_TARGETS] = {0};
 };
 
 StructureOfTeam TeamData;
@@ -70,7 +74,6 @@ StructureOfBrain BrainData;
 typedef struct StructureOfTargets 
 {
   int id;
-  int Score;
 } StructureOfTargets;
 
 /* Initial Score value */
@@ -100,9 +103,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 // callback function that will be executed when data is received from the target
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
 {
-  // int rcvd_id;
-  int rcvd_score;
-  Serial.println("Score received from the admin");
+  Serial.println("A target has been HIT");
   
   if(GameEndFlag == 0)
   {
@@ -116,14 +117,10 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     memcpy(&rcvTargetData, incomingData, sizeof(rcvTargetData));
     Serial.printf("Target board ID %u: %u bytes\n", rcvTargetData.id, len);
 
-    // Update the structures with the new incoming data
-    rcvd_score = rcvTargetData.Score;
-    Serial.printf("Score value Received: %d \n", rcvd_score);
-
-    /* Check if new score value is less than zero or not */
-    if( (Final_Score - rcvd_score ) >= 0 ) 
+    /* Check if new score value is greater than zero or not */
+    if( (Final_Score - scoreToBeMinus ) >= 0 ) 
     {
-      Final_Score = Final_Score - rcvd_score;
+      Final_Score = Final_Score - scoreToBeMinus;
     }
     else
     {
@@ -300,8 +297,15 @@ void loop()
         Serial.print("Health Given = ");
         Serial.println(TeamData.health);
 
+        Serial.print("Number of Targets Received: ");
+        Serial.println(TeamData.target_num);
+
+        Serial.print("Score minus per target: ");
+        Serial.println(TeamData.score_to_be_minus);
+
         /* Setting Final score equal to health */
         Final_Score = TeamData.health;
+        scoreToBeMinus = TeamData.score_to_be_minus;
 
         Serial.print("GO = ");
         Serial.println(TeamData.go);

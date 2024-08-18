@@ -15,6 +15,7 @@
 #define VOLT_PIN    (34U)
 #define RED_LED     (33U)
 #define GREEN_LED    35
+#define MAX_TARGETS  5
 
 /*********** Function prototypes **********/
 void SendNextionCommand(String object, String msg);

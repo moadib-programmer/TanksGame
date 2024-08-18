@@ -13,7 +13,6 @@ uint8_t broadcastAddress[] = {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x01};
 typedef struct struct_message 
 {
   int id;       // must be unique for each sender board
-  int Score;    // Score to be sent
 } struct_message;
 
 struct_message myData;
@@ -188,7 +187,6 @@ void loop()
 {
   // TARGET_ID 1 for target 1
   myData.id = TARGET_ID;
-  myData.Score = MAX_SCORE;
 
   /****** When target is hit ******/
   if(digitalRead(BUTTON_PIN) == 1) 

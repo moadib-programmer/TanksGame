@@ -31,6 +31,7 @@
 #define NRF_ADDRS       0xF0F0F0F0E1LL
 #define SSID            "SSID"         //replace with your netwrok SSID
 #define PASSWORD        "PASSWORD"     //replace with your netwrok Password
+#define MAX_TARGETS     5
 
 /***************************** Globals ****************************/
 RF24 radio(4, 5); 
@@ -71,9 +72,12 @@ struct StructureOfTeam
 {
   String team_name;
   int health;
-  unsigned char go = 0;
-  unsigned char time = 0;
-  unsigned char id = 0;
+  uint8_t score_to_be_minus = 0;
+  uint8_t go = 0;
+  uint8_t time = 0;
+  uint8_t id = 0;
+  uint8_t target_num = 0;
+  uint8_t targetScores[MAX_TARGETS] = {0};
 };
 
 StructureOfTeam TeamData;
@@ -110,6 +114,10 @@ void sendDataToBrains()
       * ID is odd: team A
       * ID is even: team B
       */
+
+      TeamData.score_to_be_minus = hitScore;
+      TeamData.target_num = targetNum;
+
       if(i % 2 == 0)
       {
         /* for Team B */
