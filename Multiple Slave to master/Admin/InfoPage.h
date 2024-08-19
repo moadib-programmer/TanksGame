@@ -113,7 +113,7 @@ String playerFormEnd = R"(" required>
 String targetInputStart = R"(
                 <input type="number" name="target)";
 String targetInputMid = R"(Score" placeholder="Enter Target )";
-String targetInputEnd = R"( Score" required>
+String targetInputEnd = R"( Score to be minus" required>
 )";
 
 #endif

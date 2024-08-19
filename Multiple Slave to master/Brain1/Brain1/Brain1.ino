@@ -49,7 +49,6 @@ struct StructureOfTeam
 {
   String team_name;
   int health;
-  uint8_t score_to_be_minus = 0;
   uint8_t go = 0;
   uint8_t time = 0;
   uint8_t id = 0;
@@ -283,6 +282,8 @@ void loop()
   {
     if(recvData())
     {
+      Serial.println("Data received");
+      
       if( (TeamData.go == 0) and (TeamData.id == TANK_ID))
       {
         Serial.println("********** rcvd team tank: " + TeamData.team_name);
@@ -300,12 +301,14 @@ void loop()
         Serial.print("Number of Targets Received: ");
         Serial.println(TeamData.target_num);
 
-        Serial.print("Score minus per target: ");
-        Serial.println(TeamData.score_to_be_minus);
+        for(int i = 1; i < TeamData.target_num; i++)
+        {
+          Serial.println("Target " + String(i) + " Score:" + TeamData.targetScores[i - 1]);
+        }
+
 
         /* Setting Final score equal to health */
         Final_Score = TeamData.health;
-        scoreToBeMinus = TeamData.score_to_be_minus;
 
         Serial.print("GO = ");
         Serial.println(TeamData.go);
