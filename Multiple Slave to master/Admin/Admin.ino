@@ -117,7 +117,7 @@ void sendDataToBrains()
     {
       Serial.println("*** Sending Data to the brain of ID : " + String(player) + " of team " + teamsNameArr[team - 1]  + "******");
       TeamData.team_name = teamsNameArr[team - 1] + " " + playerNamesArr[team - 1][player - 1];              // Team Name + Tank Name (Player Name)
-      TeamData.id = player;
+      TeamData.id = team + player;    // Logic, team + tank  = id, teamAtank1-> 1, teamAtank2-> 2.... sequence for other teams as well
 
       /* Extracting and populating Target minus Scores */
       for(int target = 1; target <= targetNum; target++)
@@ -374,6 +374,7 @@ void loop()
     Serial.println("Tank ID = ");
     Serial.print(BrainData.tankID);
 
+    totalScore = BrainData.health;
     // /*
     // * Brain ID is even for team 2 tanks and odd for team1 tanks.
     // if(BrainData.tankID % 2 == 0)

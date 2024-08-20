@@ -1,3 +1,4 @@
+
 /**
  * Brain.ino
  * 
@@ -38,7 +39,8 @@ unsigned long TotalTime = 0;
 unsigned long TimeLeft = 0;
 const uint64_t address = 0xF0F0F0F0E1LL;
 int counter = 0;
-uint8_t scoreToBeMinus = 0;
+uint8_t scoresToBeMinus[5] = {0};
+uint8_t targetNum = 0;
 
 String TankName = "";
 String TeamName = "";
@@ -116,10 +118,12 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     memcpy(&rcvTargetData, incomingData, sizeof(rcvTargetData));
     Serial.printf("Target board ID %u: %u bytes\n", rcvTargetData.id, len);
 
+    Serial.println("\n Sore to be minus from target 1 is : " + String(scoresToBeMinus[0]));
+
     /* Check if new score value is greater than zero or not */
-    if( (Final_Score - scoreToBeMinus ) >= 0 ) 
+    if( (Final_Score - scoresToBeMinus[0]) >= 0 ) 
     {
-      Final_Score = Final_Score - scoreToBeMinus;
+      Final_Score = Final_Score - scoresToBeMinus[0];
     }
     else
     {
@@ -291,6 +295,8 @@ void loop()
         TeamName = TeamData.team_name.substring(0, TeamData.team_name.indexOf(" "));
         Serial.println(TeamName);
 
+        Serial.println("Tank ID: " + String(TeamData.id));
+
         Serial.print("Tank Name = ");
         TankName = TeamData.team_name.substring(TeamData.team_name.indexOf(" "), TeamData.team_name.length());
         Serial.println(TankName);
@@ -299,13 +305,14 @@ void loop()
         Serial.println(TeamData.health);
 
         Serial.print("Number of Targets Received: ");
-        Serial.println(TeamData.target_num);
-
-        for(int i = 1; i < TeamData.target_num; i++)
+        targetNum = TeamData.target_num;
+        Serial.println(targetNum);
+        
+        for (int target = 0; target < targetNum; target++)
         {
-          Serial.println("Target " + String(i) + " Score:" + TeamData.targetScores[i - 1]);
+          scoresToBeMinus[target] = TeamData.targetScores[target];
+          Serial.println("Target 1 Score: " + String(scoresToBeMinus[target]));
         }
-
 
         /* Setting Final score equal to health */
         Final_Score = TeamData.health;

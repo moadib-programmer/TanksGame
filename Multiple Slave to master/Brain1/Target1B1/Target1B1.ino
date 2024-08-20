@@ -2,7 +2,7 @@
 #include "target.h"
 
 /*+*************** Globals ******************/
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM,PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_OF_LEDS,PIN, NEO_GRB + NEO_KHZ800);
 volatile float Voltage = 0U;
 // Set your new MAC Address
 uint8_t newMACAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xB1, 0x01};
@@ -67,21 +67,25 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
   memcpy(&healthFrmBrain, incomingData, sizeof(healthFrmBrain));
   Serial.print("health Received from the brain: ");
   Serial.println(healthFrmBrain);
+  // delay(DELAY_HIT_FLASH_MS);    
 
   /* Setting Neopixel depending on healthFrmBrain */
   if( (healthFrmBrain >= 70) and (healthFrmBrain <= 300) )
   {
     /* Setting neopixel to green, if score is between 70 and 100 */
+    Serial.println("\nUpdated COLOR: Setting the LED to the Green\n");
     setneopixel(0, 255, 0);
   }
   else if ( (healthFrmBrain >= 40) and (healthFrmBrain <= 69) )
   {
     /* Setting neopixel to yellow, if score is between 40 and 69 */
+    Serial.println("\nUpdated COLOR: Setting the LED to the Yellow\n");
     setneopixel(255, 255, 0);
   }
   else if ( (healthFrmBrain >= 0) and (healthFrmBrain <= 39) )
   {
     /* Setting neopixel to yellow, if score is between 40 and 69 */
+    Serial.println("\nUpdated COLOR: Setting the LED to the Red\n");
     setneopixel(255, 0, 0);
   }
 
@@ -118,9 +122,9 @@ void setup()
   // pinMode(VOLT_PIN, INPUT);
 
   /* Turning Green LED ON for 2 seconds */
-  digitalWrite(GREEN_LED, 1);
-  delay(GREEN_ON_TIME_MS);
-  digitalWrite(GREEN_LED, 0);
+  //digitalWrite(GREEN_LED, 1);
+ // delay(GREEN_ON_TIME_MS);
+ // digitalWrite(GREEN_LED, 0);
 
   /* Register Datasend and Datarcv callback functions */
   esp_now_register_send_cb(OnDataSent);
@@ -145,6 +149,7 @@ void setup()
 
   /* Turning ON GREEN */
   setneopixel(0, 255, 0);
+  setneopixel(0, 255, 0);
 }
 
 
@@ -153,7 +158,16 @@ void targetHitCallback()
 
   Serial.println("***** TARGET HIT ****** ");
 
-  /* Send message via ESP-NOW */
+  /* Flashing the Red LED */
+  for (int i = 0; i < NUMBER_OF_BLINKS ; i++)
+  {
+    setneopixel(255, 0, 0);
+    delay(RED_FLASH_TIME_MS);
+    setneopixel(0, 0, 0);
+    delay(RED_FLASH_TIME_MS);
+  }
+
+    /* Send message via ESP-NOW */
   Serial.println("*** Sending the Score now ****");
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));
   
@@ -163,20 +177,11 @@ void targetHitCallback()
     Serial.println(" ");
     Serial.println("Awaiting Score results ");
   }
-      
-  /* Flashing the Red LED */
-  for (int i = 0; i <= NUMBER_OF_BLINKS ; i++)
-  {
-    setneopixel(255, 0, 0);
-    delay(RED_FLASH_TIME_MS);
-    setneopixel(0, 0, 0);
-    delay(RED_FLASH_TIME_MS);
-  }
 }
 
 void setneopixel(int r, int g, int b)
 {
-  for(int i = 0; i <= NUM; i++)
+  for(int i = 0; i <= NUM_OF_LEDS; i++)
   {
     pixels.setPixelColor(i, pixels.Color(r,g,b));
     pixels.show();
