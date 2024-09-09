@@ -14,8 +14,10 @@
 
 /************** Includes *****************/
 #include "Brain1.h"
+#include "audio_module.h"
 
 /************** Globals *****************/
+Audio audio;
 int GameEndFlag = 0U;
 volatile float Voltage = 0U;
 /*
@@ -208,6 +210,24 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
   }
 
 }
+
+void SendNextionCommand(String object, String msg)
+{
+  String command = "";
+  command = object+".txt=\""+String(msg)+"\"";
+  Serial.print(command);
+  /**
+   * Put a delauy here for the Nextion display and confirm the 
+   * availability of the Nextion buffer.
+  */
+
+  Serial.write(0xff);
+  Serial.write(0xff);
+  Serial.write(0xff);
+
+  delay(20);
+}
+
  
 int recvData()
 {
@@ -220,7 +240,8 @@ int recvData()
   return 0;
 }
 
-void setup() {
+void setup() 
+{
   
   Serial.begin(9600);
   
@@ -261,25 +282,24 @@ void setup() {
 
   SendNextionCommand("start", String(" "));
   SendNextionCommand("start", String(" "));
+
+  Serial.println("INIT:  Initializing the Audio");
+  pinMode(SD_CS, OUTPUT);      
+  digitalWrite(SD_CS, HIGH);
+  SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
+
+  if(!SD.begin(SD_CS))
+  {
+    Serial.println("Error talking to SD card!");
+    while(true);  // end program
+  }
+
+  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+  audio.setVolume(15); // 0...21
+  // audio.connecttoFS(SD,"/Amaze.mp3");
+
 }
  
-void SendNextionCommand(String object, String msg)
-{
-  String command = "";
-  command = object+".txt=\""+String(msg)+"\"";
-  Serial.print(command);
-  /**
-   * Put a delauy here for the Nextion display and confirm the 
-   * availability of the Nextion buffer.
-  */
-
-  Serial.write(0xff);
-  Serial.write(0xff);
-  Serial.write(0xff);
-
-  delay(20);
-}
-
 void loop() 
 {
   while(TeamData.go == 0)

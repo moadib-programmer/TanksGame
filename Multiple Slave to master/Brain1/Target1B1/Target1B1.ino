@@ -182,7 +182,7 @@ void targetHitCallback()
     Serial.println("***** HIT color indication sent ****** ");
   }
 
-  delay(1500);
+  delay(2500);
 
   /* Send message via ESP-NOW */
   Serial.println("*** Sending the Score now ****");
