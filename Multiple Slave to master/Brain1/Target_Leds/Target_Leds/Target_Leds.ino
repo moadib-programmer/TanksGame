@@ -32,6 +32,7 @@ int functionVar = 0;
 
 /**
  * @brief OnDataSent: callback funcntion when data is sent via ESPNow
+ * There are some other pins like the pin number IO17 or soe
  * 
  * @param mac_addr: mac address of the receiver
  * @param status: Status of the sent message

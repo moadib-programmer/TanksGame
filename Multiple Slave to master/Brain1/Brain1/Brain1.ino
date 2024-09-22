@@ -283,6 +283,8 @@ void setup()
   SendNextionCommand("start", String(" "));
   SendNextionCommand("start", String(" "));
 
+  /************* Initializing the Audio module ******************/
+
   Serial.println("INIT:  Initializing the Audio");
   pinMode(SD_CS, OUTPUT);      
   digitalWrite(SD_CS, HIGH);
