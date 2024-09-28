@@ -5,8 +5,26 @@
 #include "Audio.h"
 #include "SD.h"
 #include "FS.h"
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+#include <printf.h>
 
 
+RF24 radio(4, 5); 
+const uint64_t address = 0xF0F0F0F0E1LL;
+
+int counter = 0;
+
+struct MyData 
+{
+  int counter;
+  float temperature;
+  float humidity;
+  float altitude;
+  float pressure;
+};
+MyData data;
 
 //hspi pinouts
 #define SD_CS 15
@@ -46,14 +64,53 @@ void setup()
     audio.loop();
     delay(10);
   }
+
+  /* Radio Part: HEHE */
+  radio.begin();                  //Starting the Wireless communication
+  radio.openWritingPipe(address); //Setting the address where we will send the data
+  radio.setPALevel(RF24_PA_MIN);  //You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
+  radio.stopListening();          //This sets the module as transmitter
+
+  if( radio.isChipConnected())
+  {
+    Serial.println("CHip is connected! ");
+  }
+  else
+  {
+    Serial.println("CHip is NOT connected! ");
+  }
+  
+  delay(2000);
 }
 
 void loop()
 {
-  while(1)
-  {
-    delay(10);
-  }
+  data.counter = counter;
+  data.temperature = 32;
+  data.pressure = 100;
+  data.altitude = 50;
+  data.humidity = 5;
 
+  Serial.print("Packet No. = ");
+  Serial.println(data.counter);
+
+
+  radio.write(&data, sizeof(MyData));
+  
+  Serial.println("Data Packet Sent");
+  Serial.println("");
+
+  counter++;
+  delay(4000);
+
+  if(counter % 3 == 0)
+  {
+    audio.connecttoFS(SD,"/hit.mp3");
+    for(int i = 0; i <= 800; i++)
+    {
+      audio.loop();
+      delay(10);
+    }
+  }
 }
 
