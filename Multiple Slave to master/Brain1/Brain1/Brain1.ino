@@ -18,6 +18,7 @@
 
 /************** Globals *****************/
 Audio audio;
+SPIClass *hspi = NULL;
 int GameEndFlag = 0U;
 volatile float Voltage = 0U;
 /*
@@ -113,7 +114,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     char macStr[18];
     Serial.print("Packet received from Target: ");
     snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+    mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
     
     Serial.println(macStr);
 
@@ -160,19 +161,8 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     Serial.println(" ");
     delay(100);
     
-    while(1)
-    {
-      if(radio.write(&BrainData, sizeof(StructureOfBrain)))
-      {
-        Serial.println("Data Packet Sent");
-        break;
-      }
-      else
-      {
-        Serial.println("Data packet is not sent trying again in half second ");
-        delay(500);
-      }
-    }
+    radio.write(&BrainData, sizeof(StructureOfBrain));
+    Serial.println("Data Packet Sent");
 
     Serial.println("");
     
@@ -206,6 +196,15 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     else 
     {
       Serial.println("Error sending the data");
+    }
+
+    /************ Starting the Audio  **************/
+    audio.connecttoFS(SD,"/hit.mp3");
+
+    for(int i = 0; i <= 800; i++)
+    {
+      audio.loop();
+      delay(10);
     }
   }
 
@@ -273,6 +272,10 @@ void setup()
   radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
   radio.startListening();              //This sets the module as receiver
 
+  radio.printDetails();
+
+  delay(1500);
+
   pinMode(GREEN_LED, OUTPUT);
 
   /* Turning Green LED ON for a time */
@@ -285,20 +288,28 @@ void setup()
 
   /************* Initializing the Audio module ******************/
 
-  Serial.println("INIT:  Initializing the Audio");
-  pinMode(SD_CS, OUTPUT);      
-  digitalWrite(SD_CS, HIGH);
-  SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
+  Serial.println("***** Init audio module *******");
+  hspi = new SPIClass(HSPI);
 
-  if(!SD.begin(SD_CS))
+  hspi->begin(SPI_SCK, SPI_MISO, SPI_MOSI, SD_CS);
+  delay(500);
+
+  if(!SD.begin(SD_CS, *hspi))
   {
     Serial.println("Error talking to SD card!");
     while(true);  // end program
   }
-
+    
   audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
   audio.setVolume(15); // 0...21
-  // audio.connecttoFS(SD,"/Amaze.mp3");
+
+  audio.connecttoFS(SD,"/hit.mp3");
+
+  for(int i = 0; i <= 800; i++)
+  {
+    audio.loop();
+    delay(10);
+  }
 
 }
  

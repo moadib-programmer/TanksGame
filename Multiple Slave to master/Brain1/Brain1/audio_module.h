@@ -6,13 +6,16 @@
 #include "Audio.h"
 #include "SD.h"
 #include "FS.h"
- 
+#include <SPI.h>
 /*********** MACRO *************/
-#define SD_CS          5
-#define SPI_MOSI      23    // SD Card
-#define SPI_MISO      19
-#define SPI_SCK       18
- 
+
+//hspi pinouts
+#define SD_CS 15
+#define SPI_MOSI 13
+#define SPI_MISO 22
+#define SPI_SCK 14
+
+//speakers pinouts
 #define I2S_DOUT      25
 #define I2S_BCLK      27    // I2S
 #define I2S_LRC       26
