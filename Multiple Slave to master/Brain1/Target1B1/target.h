@@ -7,7 +7,7 @@
 #define VOLT_PIN           34
 #define RED_LED            33
 #define BUTTON_PIN         21
-#define GREEN_LED          35
+#define GREEN_LED          32
 #define GREEN_ON_TIME_MS   2000
 
 /**

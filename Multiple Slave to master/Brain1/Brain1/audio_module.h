@@ -19,6 +19,7 @@
 #define I2S_DOUT      25
 #define I2S_BCLK      27    // I2S
 #define I2S_LRC       26
+#define I2S_SD        2
 
  
 /*********** Data Types *************/

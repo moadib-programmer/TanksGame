@@ -4,7 +4,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <esp_wifi.h>
 /*+*************** Macros ******************/
-#define PIN                15
+#define PIN                12
 #define NUM_OF_LEDS        9
 #define RED_LED            33
 #define NUMBER_OF_BLINKS   3

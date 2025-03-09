@@ -14,7 +14,7 @@
 
 #define VOLT_PIN    (34U)
 #define RED_LED     (33U)
-#define GREEN_LED    35
+#define GREEN_LED    32
 #define MAX_TARGETS  5
 
 /*********** Function prototypes **********/

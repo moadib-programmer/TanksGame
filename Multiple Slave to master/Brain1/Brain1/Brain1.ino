@@ -274,14 +274,18 @@ void setup()
 
   radio.printDetails();
 
-  delay(1500);
+  delay(100);
 
   pinMode(GREEN_LED, OUTPUT);
+  pinMode(RED_LED, OUTPUT);
+  pinMode(I2S_SD, OUTPUT);
 
   /* Turning Green LED ON for a time */
-  digitalWrite(GREEN_LED, 1);
-  delay(2000);
   digitalWrite(GREEN_LED, 0);
+  digitalWrite(RED_LED, 0);
+  delay(2000);
+  digitalWrite(RED_LED, 1);
+  digitalWrite(GREEN_LED, 1);
 
   SendNextionCommand("start", String(" "));
   SendNextionCommand("start", String(" "));
@@ -289,6 +293,8 @@ void setup()
   /************* Initializing the Audio module ******************/
 
   Serial.println("***** Init audio module *******");
+  digitalWrite(I2S_SD, 1);
+
   hspi = new SPIClass(HSPI);
 
   hspi->begin(SPI_SCK, SPI_MISO, SPI_MOSI, SD_CS);
@@ -303,6 +309,7 @@ void setup()
   audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
   audio.setVolume(15); // 0...21
 
+  Serial.println("Audio Testing START");
   audio.connecttoFS(SD,"/hit.mp3");
 
   for(int i = 0; i <= 800; i++)
@@ -310,6 +317,8 @@ void setup()
     audio.loop();
     delay(10);
   }
+
+  Serial.println("Audio Testing END");
 
 }
  
@@ -456,6 +465,7 @@ void loop()
 
     /* TODO: Add the ending of game logic here */
     GameEndFlag = 1;
+
     while(1)
     {
       digitalWrite(GREEN_LED, HIGH);
@@ -463,6 +473,7 @@ void loop()
       digitalWrite(GREEN_LED, LOW);
       delay(500);
     }
+    
   }
 
   delay(500);  
