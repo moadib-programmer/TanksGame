@@ -111,9 +111,16 @@ void setup()
   WiFi.mode(WIFI_STA);
 
   /* Assigning a custom MAC address */
-  esp_wifi_set_mac(WIFI_IF_STA, &newMACAddress[0]);
+  if( esp_wifi_set_mac(WIFI_IF_STA, &newMACAddress[0]) == ESP_OK)
+  {
+    Serial.println(" ***** New mac address set ********");
+  }
+  else
+  {
+    Serial.println("******* MAC ADDRESS NOT SET *********");
+  }
 
-  Serial.println(" ***** New mac address set ********");
+  
   delay(100);
 
   /* Init ESP-NOW */
@@ -130,9 +137,12 @@ void setup()
   // pinMode(VOLT_PIN, INPUT);
 
   /* Turning Green LED ON for 2 seconds */
-  //digitalWrite(GREEN_LED, 1);
- // delay(GREEN_ON_TIME_MS);
- // digitalWrite(GREEN_LED, 0);
+  digitalWrite(GREEN_LED, 0);
+  digitalWrite(RED_LED, 0);
+ delay(GREEN_ON_TIME_MS);
+ digitalWrite(GREEN_LED, 1);
+
+ digitalWrite(RED_LED, 1);
 
   /* Register Datasend and Datarcv callback functions */
   esp_now_register_send_cb(OnDataSent);

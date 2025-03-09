@@ -10,7 +10,7 @@
 /************** Macros *****************/
 /* ID of this Brain */
 #define ID          1
-#define TANK_ID     1
+#define TANK_ID     2
 
 #define VOLT_PIN    (34U)
 #define RED_LED     (33U)

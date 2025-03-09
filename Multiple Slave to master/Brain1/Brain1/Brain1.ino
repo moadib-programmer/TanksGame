@@ -162,7 +162,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     delay(100);
     
     radio.write(&BrainData, sizeof(StructureOfBrain));
-    Serial.println("Data Packet Sent");
+    Serial.println("Data Packet Sent to the admin");
 
     Serial.println("");
     
@@ -189,7 +189,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     Serial.println("*** Sending the Score now ****");
     esp_err_t result = esp_now_send(targetMACAddress, (uint8_t *) &Final_Score, sizeof(Final_Score));
     
-    if (result == ESP_OK) 
+    if (result == ESP_OK)
     {
       Serial.println("Sent Score to the target");
     }
@@ -329,6 +329,8 @@ void loop()
     if(recvData())
     {
       Serial.println("Data received");
+      Serial.println("TeamData.go = " + String(TeamData.go ));
+      Serial.println("TeamData.id  = " + String(TeamData.id ));
       
       if( (TeamData.go == 0) and (TeamData.id == TANK_ID))
       {
@@ -473,7 +475,7 @@ void loop()
       digitalWrite(GREEN_LED, LOW);
       delay(500);
     }
-    
+
   }
 
   delay(500);  
