@@ -147,8 +147,8 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
 
     BrainData.counter = counter;
     BrainData.health = Final_Score;
-    BrainData.brain_id = 1;
-    BrainData.tankID = TANK_ID;
+    BrainData.team_id = TEAM_ID;
+    BrainData.tank_id = TANK_ID;
     
     Serial.println(" ");
     Serial.print("Packet No. = ");
@@ -156,10 +156,13 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     
     Serial.print("Health = ");
     Serial.print(BrainData.health);
-  
-    Serial.print("Brain ID = ");
-    Serial.print(BrainData.brain_id);
-  
+
+    Serial.print("Tank ID = ");
+    Serial.print(BrainData.tank_id);
+
+    Serial.print("Team ID = ");
+    Serial.print(BrainData.team_id);
+
     Serial.println(" ");
     delay(100);
     

@@ -290,7 +290,7 @@ void handleStart()
            *      when the target is hit and updated score is shared.
            * 
           */
-          htmlContent += "<span>Total Score: " + String(totalScore) + "</span>";
+          htmlContent += "<span>Total Score: " + String(teamsScoresArr[team][player]) + "</span>";
 
           /* TODO: Add the logic for batteries of the targets here */
           htmlContent += "<span>Battery: 100% </span>";
@@ -387,25 +387,15 @@ void loop()
     Serial.println("Health = ");
     Serial.print(BrainData.health);
   
-    Serial.println("Brain ID = ");
-    Serial.print(BrainData.brain_id);
+    Serial.println("Team ID = ");
+    Serial.print(BrainData.team_id);
 
     Serial.println("Tank ID = ");
-    Serial.print(BrainData.tankID);
+    Serial.print(BrainData.tank_id);
 
     totalScore = BrainData.health;
 
-    // switch (BrainData.brain_id)
-    // {
-    // case "11":
-    //   /* code */
-    //   teamsScoresArr[0][0] = BrainData.health;
-    //   Serial.println("Tank 11 new score is: " + String(teamsScoresArr[0][0]));
-    //   break;
-    
-    // default:
-    //   break;
-    // }
+    teamsScoresArr[BrainData.team_id - 1][BrainData.tank_id - 1] = BrainData.health;
 
     /**
      * TODO: Add the logic to update the score of the Concerned Brain and Admin data only 
