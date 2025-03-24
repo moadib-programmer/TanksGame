@@ -133,16 +133,17 @@ void setup()
   pinMode(RED_LED, OUTPUT);
   digitalWrite(RED_LED, LOW);
   pinMode(GREEN_LED, OUTPUT);
-
+                                    
   // pinMode(VOLT_PIN, INPUT);
 
   /* Turning Green LED ON for 2 seconds */
   digitalWrite(GREEN_LED, 0);
   digitalWrite(RED_LED, 0);
- delay(GREEN_ON_TIME_MS);
- digitalWrite(GREEN_LED, 1);
 
- digitalWrite(RED_LED, 1);
+  delay(GREEN_ON_TIME_MS);
+  
+  digitalWrite(GREEN_LED, 1);
+  digitalWrite(RED_LED, 1);
 
   /* Register Datasend and Datarcv callback functions */
   esp_now_register_send_cb(OnDataSent);

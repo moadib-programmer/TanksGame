@@ -52,6 +52,7 @@ int totalScore = 0;  //Total score of the Game
 String teamsNameArr[MAX_TEAMS] = {};
 String playerNamesArr[MAX_TEAMS][MAX_PLAYERS] = {};
 String targetScoresArr[MAX_TEAMS][MAX_PLAYERS][MAX_TARGETS] = {};
+int teamsScoresArr[MAX_TEAMS][MAX_PLAYERS] = {0};
 
 /* If players will have different scores as well */
 // String teamsPlayerScoresArr[MAX_TEAMS][MAX_PLAYERS] = {};
@@ -74,7 +75,8 @@ struct StructureOfTeam
   int health;
   uint8_t go = 0;
   uint8_t time = 0;
-  uint8_t id = 0;
+  uint8_t tank_id = 0;
+  uint8_t team_id = 0;
   uint8_t target_num = 0;
   uint8_t targetScores[MAX_TARGETS] = {0};
 };
@@ -85,7 +87,8 @@ StructureOfTeam TeamData;
 struct StructureOfBrain
 {
   unsigned char counter;
-  unsigned char brain_id;
+  unsigned char tank_id;
+  unsigned char team_id;
   unsigned char health;
   unsigned char tankID;
 };
@@ -115,9 +118,11 @@ void sendDataToBrains()
 
     for(int player = 1; player <= tankNum; player++)
     {
-      Serial.println("*** Sending Data to the brain of ID : " + String(player) + " of team " + teamsNameArr[team - 1]  + "******");
       TeamData.team_name = teamsNameArr[team - 1] + " " + playerNamesArr[team - 1][player - 1];              // Team Name + Tank Name (Player Name)
-      TeamData.id = team + player;    // Logic, team + tank  = id, teamAtank1-> 1, teamAtank2-> 2.... sequence for other teams as well
+      TeamData.tank_id = player;
+      TeamData.team_id = team;
+  
+      Serial.println("*** Sending Data to the brain of team ID: "+ String(TeamData.team_id) + " and Tank ID" + String(TeamData.tank_id ) + " of team " + teamsNameArr[team - 1]  + "******");
 
       /* Extracting and populating Target minus Scores */
       for(int target = 1; target <= targetNum; target++)
@@ -194,12 +199,12 @@ void handleTeamData()
 
         for (int player = 1; player <= tankNum; player++) 
         {
-            htmlContent += playerFormStart + team + String(player) + playerFormMid + player + playerFormEnd;
+          htmlContent += playerFormStart + team + String(player) + playerFormMid + player + playerFormEnd;
 
-            for (int target = 1; target <= targetNum; target++) 
-            {
-                htmlContent += targetInputStart + team + String(player) + String(target) + targetInputMid + target + targetInputEnd;
-            }
+          for (int target = 1; target <= targetNum; target++) 
+          {
+              htmlContent += targetInputStart + team + String(player) + String(target) + targetInputMid + target + targetInputEnd;
+          }
         }
         htmlContent += "</div>"; // Close the form-block div
     }
@@ -212,6 +217,9 @@ void handleTeamData()
 
 void handleTankData() 
 {
+  /**
+   * Supposing, each team has fix number of players not variable.
+  */
   /* Change the logic for the tank Data as well as the extraction of the arguments */
 
   for(int team = 1; team <= teamNum; team++)
@@ -225,6 +233,7 @@ void handleTankData()
       Serial.println(teamsNameArr[team - 1]);
     }
 
+    // Player names are stored in the 2D array consist of 0 index(team 1) -> {{"player1", "player2"}}
     for(int player = 1; player <= tankNum; player++)
     {
       /* Extracting and populating player names */
@@ -272,13 +281,22 @@ void handleStart()
 
         for (int player = 0; player < tankNum; player++) 
         {
-            htmlContent += "<div class=\"player\">";
-            htmlContent += "<span>" + playerNamesArr[team][player] + "</span>";
+          htmlContent += "<div class=\"player\">";
+          htmlContent += "<span>" + playerNamesArr[team][player] + "</span>";
 
-            htmlContent += "<span>Total Score: " + String(totalScore) + "</span>";
-            htmlContent += "<span>Battery: 100% </span>";
-            htmlContent += "</div>";
+          /**
+           * TODO: add the logic for multiple scores with teams here.
+           * Make an array teamsScore[team][tank], and then update the array in the main loop
+           *      when the target is hit and updated score is shared.
+           * 
+          */
+          htmlContent += "<span>Total Score: " + String(totalScore) + "</span>";
+
+          /* TODO: Add the logic for batteries of the targets here */
+          htmlContent += "<span>Battery: 100% </span>";
+          htmlContent += "</div>";
         }
+
         htmlContent += "</div>"; // Close team div
     }
 
@@ -331,11 +349,12 @@ void setup()
 Serial.println(" Starting Server ");
 
 server.on("/", HTTP_GET, handleRoot);
-server.on("/tankData", HTTP_POST, handleTankData);
+server.on("/new", HTTP_GET, handleNew);
 server.on("/teamData", HTTP_POST, handleTeamData);
+server.on("/tankData", HTTP_POST, handleTankData);
 server.on("/start", HTTP_GET, handleStart);
 server.on("/start", HTTP_POST, handleStart);
-server.on("/new", HTTP_GET, handleNew);
+
 
 server.begin();
 
@@ -375,6 +394,28 @@ void loop()
     Serial.print(BrainData.tankID);
 
     totalScore = BrainData.health;
+
+    // switch (BrainData.brain_id)
+    // {
+    // case "11":
+    //   /* code */
+    //   teamsScoresArr[0][0] = BrainData.health;
+    //   Serial.println("Tank 11 new score is: " + String(teamsScoresArr[0][0]));
+    //   break;
+    
+    // default:
+    //   break;
+    // }
+
+    /**
+     * TODO: Add the logic to update the score of the Concerned Brain and Admin data only 
+     * Get the ID break it apart into two Int's, and then tanksScore[id[1] - 1][id[2] - 1], 
+     * update the score.
+     * 
+     * TODO: Try sending the html page manually after this command, this will remove the automatic refreshing 
+     *       of the page.
+    */
+
     // /*
     // * Brain ID is even for team 2 tanks and odd for team1 tanks.
     // if(BrainData.tankID % 2 == 0)
@@ -400,10 +441,6 @@ void loop()
 void SendTheData(void)
 { 
     TeamData.go = 1;
-    
-    /* ID of slaves */
-    /*Update the ID logic */
-    TeamData.id = 1; 
 
     /* Starting the game */
     Serial.println(" >>>> Starting the Game Now: <<<< ");

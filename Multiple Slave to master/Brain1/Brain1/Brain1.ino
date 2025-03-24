@@ -56,7 +56,8 @@ struct StructureOfTeam
   int health;
   uint8_t go = 0;
   uint8_t time = 0;
-  uint8_t id = 0;
+  uint8_t tank_id = 0;
+  uint8_t team_id = 0;
   uint8_t target_num = 0;
   uint8_t targetScores[MAX_TARGETS] = {0};
 };
@@ -67,7 +68,8 @@ StructureOfTeam TeamData;
 struct StructureOfBrain
 {
   unsigned char counter;
-  unsigned char brain_id;
+  unsigned char tank_id;
+  unsigned char team_id;
   unsigned char health;
   unsigned char tankID;
 };
@@ -324,22 +326,21 @@ void setup()
  
 void loop() 
 {
-  while(TeamData.go == 0)
+  while(TeamData.go == 0) // this is added so that after the game is started it won't go into this loop again
   {
     if(recvData())
     {
       Serial.println("Data received");
       Serial.println("TeamData.go = " + String(TeamData.go ));
-      Serial.println("TeamData.id  = " + String(TeamData.id ));
-      
-      if( (TeamData.go == 0) and (TeamData.id == TANK_ID))
+      Serial.println("TeamData.tank_id  = " + String(TeamData.tank_id ));
+      Serial.println("TeamData.team_id  = " + String(TeamData.team_id ));
+
+      if( (TeamData.go == 0) and (TeamData.tank_id == TANK_ID) and (TeamData.team_id == TEAM_ID))
       {
         Serial.println("********** rcvd team tank: " + TeamData.team_name);
         Serial.print("Team Name = ");
         TeamName = TeamData.team_name.substring(0, TeamData.team_name.indexOf(" "));
         Serial.println(TeamName);
-
-        Serial.println("Tank ID: " + String(TeamData.id));
 
         Serial.print("Tank Name = ");
         TankName = TeamData.team_name.substring(TeamData.team_name.indexOf(" "), TeamData.team_name.length());
@@ -390,6 +391,8 @@ void loop()
         }
         
         /* Sending the score to the targets */
+        //TODO: Add the logic to send the data to multiple targets.
+
         Serial.println("*** Sending the Score now ****");
         esp_err_t result = esp_now_send(targetMACAddress, (uint8_t *) &Final_Score, sizeof(Final_Score));
         
@@ -413,10 +416,10 @@ void loop()
         delay(1000);       
 
         SendNextionCommand("start", String("START"));
-        delay(2000);
+        delay(200);
         
         SendNextionCommand("start", String(" "));
-        delay(1000);          
+        delay(200);          
 
         digitalWrite(GREEN_LED, HIGH);
 
@@ -432,6 +435,8 @@ void loop()
       }
     }
   }
+
+  /* Tells that the Game is now started */
 
   if( ((millis() - StartTime) / 1000) <= TotalTime )
   {
@@ -475,7 +480,6 @@ void loop()
       digitalWrite(GREEN_LED, LOW);
       delay(500);
     }
-
   }
 
   delay(500);  
