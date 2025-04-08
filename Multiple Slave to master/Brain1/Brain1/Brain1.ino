@@ -443,6 +443,15 @@ void loop()
 
   if( ((millis() - StartTime) / 1000) <= TotalTime )
   {
+    if(recvData()) /* Reset command is received */
+    {
+      if(TeamData.go == 2)  // Reset command is go == 2
+      {
+        /* TODO: Add the Reset command sent to the targets */
+        ESP.restart();
+      }
+    }
+
     int minute = 0;
     int seconds = 0;
     String countdown = "";
@@ -482,6 +491,15 @@ void loop()
       delay(500);
       digitalWrite(GREEN_LED, LOW);
       delay(500);
+    }
+  }
+
+  if(recvData()) /* Reset command is received */
+  {
+    if(TeamData.go == 2)  // Reset command is go == 2
+    {
+      /* TODO: Add the Reset command sent to the targets */
+      ESP.restart();
     }
   }
 

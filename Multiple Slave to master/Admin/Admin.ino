@@ -355,6 +355,7 @@ server.on("/tankData", HTTP_POST, handleTankData);
 server.on("/start", HTTP_GET, handleStart);
 server.on("/start", HTTP_POST, handleStart);
 
+/* TODO: Add the RESET command here, TeamData.go = 2 is the reset command */
 
 server.begin();
 
