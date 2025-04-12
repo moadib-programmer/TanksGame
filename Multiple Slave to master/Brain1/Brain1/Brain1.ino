@@ -123,12 +123,12 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     memcpy(&rcvTargetData, incomingData, sizeof(rcvTargetData));
     Serial.printf("Target board ID %u: %u bytes\n", rcvTargetData.id, len);
 
-    Serial.println("\n Sore to be minus from target 1 is : " + String(scoresToBeMinus[0]));
+    Serial.println("\n Sore to be minus from target 1 is : " + String(scoresToBeMinus[rcvTargetData.id - 1]));
 
     /* Check if new score value is greater than zero or not */
-    if( (Final_Score - scoresToBeMinus[0]) >= 0 ) 
+    if( (Final_Score - scoresToBeMinus[rcvTargetData.id - 1]) >= 0 ) 
     {
-      Final_Score = Final_Score - scoresToBeMinus[0];
+      Final_Score = Final_Score - scoresToBeMinus[rcvTargetData.id - 1];
     }
     else
     {
@@ -394,7 +394,8 @@ void loop()
         }
         
         /* Sending the score to the targets */
-        //TODO: Add the logic to send the data to multiple targets.
+        //TODO: Add the logic to send the data to multiple targets. No need as from now all of the
+        // targets will have their ID and based on the ID their scores would be updated.
 
         Serial.println("*** Sending the Score now ****");
         esp_err_t result = esp_now_send(targetMACAddress, (uint8_t *) &Final_Score, sizeof(Final_Score));
