@@ -359,7 +359,7 @@ void loop()
         for (int target = 0; target < targetNum; target++)
         {
           scoresToBeMinus[target] = TeamData.targetScores[target];
-          Serial.println("Target 1 Score: " + String(scoresToBeMinus[target]));
+          Serial.println("Target " + String(target) + "Score: " + String(scoresToBeMinus[target]));
         }
 
         /* Setting Final score equal to health */

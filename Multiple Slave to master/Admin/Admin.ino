@@ -124,7 +124,7 @@ void sendDataToBrains()
   
       Serial.println("*** Sending Data to the brain of team ID: "+ String(TeamData.team_id) + " and Tank ID" + String(TeamData.tank_id ) + " of team " + teamsNameArr[team - 1]  + "******");
 
-      /* Extracting and populating Target minus Scores */
+      /* Extracting and populating Target Scores to be minus */
       for(int target = 1; target <= targetNum; target++)
       {
         /* Extracting player names */
@@ -257,7 +257,6 @@ void handleTankData()
       }
     }
   }
-
 
   sendDataToBrains();
 

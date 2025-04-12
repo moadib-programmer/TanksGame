@@ -119,7 +119,6 @@ void setup()
   {
     Serial.println("******* MAC ADDRESS NOT SET *********");
   }
-
   
   delay(100);
 
