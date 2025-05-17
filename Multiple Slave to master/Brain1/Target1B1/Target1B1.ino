@@ -52,8 +52,6 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 */
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) 
 {
-  esp_err_t transmission_status = ESP_FAIL; 
-
   memcpy(&healthFrmBrain, incomingData, sizeof(healthFrmBrain));
   Serial.print("health Received from the brain: ");
   Serial.println(healthFrmBrain);
@@ -149,6 +147,12 @@ void setup()
     return;
   }
 
+/**
+ * This is the funciton which is needed to send the status of the lED
+ * The function takes the 2 arguments which is the one and the one 
+ * argument is the led number, which is actually its color and later it calls for the 
+ * delay at which the led blinks
+*/
     /* Register peer */
   memcpy(peerInfo.peer_addr, targetLedAddress, 6);
   peerInfo.channel = 0;  
@@ -172,7 +176,6 @@ void setup()
 
 void targetHitCallback()
 {
-  esp_err_t transmission_status = ESP_FAIL;
 
   Serial.println("***** TARGET HIT ****** ");
   digitalWrite(RED_TARGET_LIGHT, 0);
