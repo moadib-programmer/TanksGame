@@ -17,14 +17,6 @@ typedef struct struct_message
 } struct_message;
 
 
-/* Variable to be sent to the Target LED 
- * value = 1 -> HIT (flash RED)
- * value = 2 -> TURN GREEN
- * value = 3 -> Turn Yellow
- * value = 4 -> Turn Red
- */
-int functionVar = 0;
-
 struct_message myData;
 
 int healthFrmBrain = 0;
@@ -73,28 +65,25 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
   {
     /* Setting neopixel to green */
     Serial.println("\n Sending Green color switching \n");
-    functionVar = 2;
-    transmission_status = esp_now_send(targetLedAddress, (uint8_t *) &functionVar, sizeof(functionVar));
+    digitalWrite(RED_TARGET_LIGHT, 0);
+    digitalWrite(GREEN_TARGET_LIGHT, 1);
+    digitalWrite(YELLOW_TARGET_LIGHT, 0);
   }
   else if ( (healthFrmBrain >= 40) and (healthFrmBrain <= 69) )
   {
     /* Setting neopixel to yellow */
     Serial.println("\n Sending yellow color switching \n");
-    functionVar = 3;
-    transmission_status = esp_now_send(targetLedAddress, (uint8_t *) &functionVar, sizeof(functionVar));
+    digitalWrite(RED_TARGET_LIGHT, 0);
+    digitalWrite(GREEN_TARGET_LIGHT, 0);
+    digitalWrite(YELLOW_TARGET_LIGHT, 1);
   }
   else if ( (healthFrmBrain >= 0) and (healthFrmBrain <= 39) )
   {
     /* Setting neopixel to Red */
     Serial.println("\n Sending yellow Red switching \n");
-    functionVar = 4;
-    transmission_status = esp_now_send(targetLedAddress, (uint8_t *) &functionVar, sizeof(functionVar));
-  }
-
-  if (transmission_status == ESP_OK) 
-  {
-    Serial.println("Score Sent to the Target LED");
-    delay(500);
+    digitalWrite(RED_TARGET_LIGHT, 1);
+    digitalWrite(GREEN_TARGET_LIGHT, 0);
+    digitalWrite(YELLOW_TARGET_LIGHT, 0);
   }
 
   Serial.println();
@@ -174,6 +163,10 @@ void setup()
 
   Serial.println("******* Initiating the Hit detection ********");
   pinMode(BUTTON_PIN, INPUT_PULLDOWN);
+
+  digitalWrite(RED_TARGET_LIGHT, 0);
+  digitalWrite(GREEN_TARGET_LIGHT, 1);
+  digitalWrite(YELLOW_TARGET_LIGHT, 0);
 }
 
 
@@ -182,17 +175,18 @@ void targetHitCallback()
   esp_err_t transmission_status = ESP_FAIL;
 
   Serial.println("***** TARGET HIT ****** ");
+  digitalWrite(RED_TARGET_LIGHT, 0);
+  digitalWrite(GREEN_TARGET_LIGHT, 0);
+  digitalWrite(YELLOW_TARGET_LIGHT, 0);
 
   /* Flashing the Red LED */
-  functionVar = 1;
-  transmission_status = esp_now_send(targetLedAddress, (uint8_t *) &functionVar, sizeof(functionVar));
-  
-  if (transmission_status == ESP_OK) 
+  for (int i = 0; i <= 2; i++)
   {
-    Serial.println("***** HIT color indication sent ****** ");
+    digitalWrite(RED_TARGET_LIGHT, 1);
+    delay(500);
+    digitalWrite(RED_TARGET_LIGHT, 0);
+    delay(500);
   }
-
-  delay(2500);   // delay for the LED's to complete the red color indication.
 
   /* Send message via ESP-NOW */
   Serial.println("*** Sending the Score now ****");

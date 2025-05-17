@@ -9,6 +9,9 @@
 #define BUTTON_PIN         21
 #define GREEN_LED          32
 #define GREEN_ON_TIME_MS   2000
+#define RED_TARGET_LIGHT   10
+#define GREEN_TARGET_LIGHT 11
+#define YELLOW_TARGET_LIGHT 12
 
 /**
  * @brief HIT Brief
