@@ -11,10 +11,11 @@ uint8_t broadcastAddress[] = {0x42, 0xAE, 0xA4, 0x07, 0x0D, 0x01};
 uint8_t targetLedAddress[] = {0x32, 0xAE, 0xA4, 0x07, 0xA1, 0x01};
 
 /******* Structure to send data to the brain ********/
-typedef struct struct_message 
+typedef struct StructureOfTargets 
 {
-  int id;       // must be unique for each sender board
-} struct_message;
+  int id;
+  bool soft_hard_flag; // soft -> 0, hard -> 1.
+} StructureOfTargets;
 
 
 struct_message myData;
@@ -191,6 +192,7 @@ void targetHitCallback()
     delay(500);
   }
 
+  myData.soft_hard_flag = 1; // default hard
   /* Send message via ESP-NOW */
   Serial.println("*** Sending the Score now ****");
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));

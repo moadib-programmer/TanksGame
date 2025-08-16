@@ -42,7 +42,8 @@ unsigned long TotalTime = 0;
 unsigned long TimeLeft = 0;
 const uint64_t address = 0xF0F0F0F0E1LL;
 int counter = 0;
-uint8_t scoresToBeMinus[5] = {0};
+uint8_t scoresToBeMinusHard[5] = {0};
+uint8_t scoresToBeMinusSoft[5] = {0};
 uint8_t targetNum = 0;
 
 String TankName = "";
@@ -59,7 +60,9 @@ struct StructureOfTeam
   uint8_t tank_id = 0;
   uint8_t team_id = 0;
   uint8_t target_num = 0;
-  uint8_t targetScores[MAX_TARGETS] = {0};
+  bool target_soft_config_flag = false;
+  uint8_t targetSoftScores[MAX_TARGETS] = {0};
+  uint8_t targetHardScores[MAX_TARGETS] = {0};
 };
 
 StructureOfTeam TeamData;
@@ -80,6 +83,7 @@ StructureOfBrain BrainData;
 typedef struct StructureOfTargets 
 {
   int id;
+  bool soft_hard_flag; // soft -> 0, hard -> 1.
 } StructureOfTargets;
 
 /* Initial Score value */
@@ -113,6 +117,8 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
   
   if(GameEndFlag == 0)
   {
+    uint8_t *score_to_be_minus = scoresToBeMinusHard;
+
     char macStr[18];
     Serial.print("Packet received from Target: ");
     snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
@@ -123,12 +129,26 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     memcpy(&rcvTargetData, incomingData, sizeof(rcvTargetData));
     Serial.printf("Target board ID %u: %u bytes\n", rcvTargetData.id, len);
 
-    Serial.println("\n Sore to be minus from target 1 is : " + String(scoresToBeMinus[rcvTargetData.id - 1]));
+    /* Picking Soft or hard hit */
+    if(TeamData.target_soft_config_flag)
+    {
+      /* soft -> 0, hard -> 1 */
+      if(rcvTargetData.soft_hard_flag)
+      {
+        score_to_be_minus = scoresToBeMinusHard;
+        Serial.println("\n Sore to be minus (Hard) from target 1 is : " + String(score_to_be_minus[rcvTargetData.id - 1]));
+      }
+      else
+      {
+        score_to_be_minus = scoresToBeMinusSoft;
+        Serial.println("\n Sore to be minus (Soft) from target 1 is : " + String(score_to_be_minus[rcvTargetData.id - 1]));
+      }
+    }
 
     /* Check if new score value is greater than zero or not */
-    if( (Final_Score - scoresToBeMinus[rcvTargetData.id - 1]) >= 0 ) 
+    if( (Final_Score - score_to_be_minus[rcvTargetData.id - 1]) >= 0 ) 
     {
-      Final_Score = Final_Score - scoresToBeMinus[rcvTargetData.id - 1];
+      Final_Score = Final_Score - score_to_be_minus[rcvTargetData.id - 1];
     }
     else
     {
@@ -356,10 +376,25 @@ void loop()
         targetNum = TeamData.target_num;
         Serial.println(targetNum);
         
-        for (int target = 0; target < targetNum; target++)
+        if(TeamData.target_soft_config_flag)
+        {     
+          for (int target = 0; target < targetNum; target++)
+          {
+            scoresToBeMinusSoft[target] = TeamData.targetSoftScores[target];
+            Serial.println("Target " + String(target) + "Soft Score: " + String(scoresToBeMinusSoft[target]));
+            
+            scoresToBeMinusHard[target] = TeamData.targetHardScores[target];
+            Serial.println("Target " + String(target) + "Hard Score: " + String(scoresToBeMinusHard[target]));
+          }
+
+        }
+        else
         {
-          scoresToBeMinus[target] = TeamData.targetScores[target];
-          Serial.println("Target " + String(target) + "Score: " + String(scoresToBeMinus[target]));
+          for (int target = 0; target < targetNum; target++)
+          {
+            scoresToBeMinusHard[target] = TeamData.targetHardScores[target];
+            Serial.println("Target " + String(target) + "normal Score: " + String(scoresToBeMinusHard[target]));
+          }
         }
 
         /* Setting Final score equal to health */

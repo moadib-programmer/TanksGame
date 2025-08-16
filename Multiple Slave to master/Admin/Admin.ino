@@ -80,7 +80,7 @@ struct StructureOfTeam
   uint8_t tank_id = 0;
   uint8_t team_id = 0;
   uint8_t target_num = 0;
-  uint8_t target_soft_config_flag = 0;
+  bool target_soft_config_flag = false;
   uint8_t targetSoftScores[MAX_TARGETS] = {0};
   uint8_t targetHardScores[MAX_TARGETS] = {0};
 };
@@ -138,11 +138,11 @@ void sendDataToBrains()
         {
           /* Extracting target soft scores */
           TeamData.targetSoftScores[target - 1] = targetScoresArrSoft[team - 1][player - 1][target - 1].toInt();
-          Serial.println("Target " + String(target) + " score: " + TeamData.targetSoftScores[target - 1]);
+          Serial.println("Target " + String(target) + " Soft score: " + TeamData.targetSoftScores[target - 1]);
           
           /* Extracting target hard scores */
           TeamData.targetHardScores[target - 1] = targetScoresArrHard[team - 1][player - 1][target - 1].toInt();
-          Serial.println("Target " + String(target) + " score: " + TeamData.targetHardScores[target - 1]);
+          Serial.println("Target " + String(target) + " Hard score: " + TeamData.targetHardScores[target - 1]);
         }
 
       }
@@ -152,7 +152,7 @@ void sendDataToBrains()
         {
           /* Extracting target number */
           TeamData.targetHardScores[target - 1] = targetScoresArrHard[team - 1][player - 1][target - 1].toInt();
-          Serial.println("Target " + String(target) + " score: " + TeamData.targetHardScores[target - 1]);
+          Serial.println("Target " + String(target) + " normal score: " + TeamData.targetHardScores[target - 1]);
         }
       }
 
@@ -321,7 +321,7 @@ void handleTankData()
           if(server.hasArg("target" + String(team) + String(player) + String(target) + "Score") )
           {
             targetScoresArrHard[team - 1][player - 1][target - 1] = server.arg("target" + String(team) + String(player) + String(target) + "Score");
-            Serial.println("Target of team " + String(team) + " and player " + String(player) + "and target " + String(target) + ", score to be minus is: ");
+            Serial.println("Target of team " + String(team) + " and player " + String(player) + "and target " + String(target) + ", normal score to be minus is: ");
             Serial.println(targetScoresArrHard[team - 1][player - 1][target - 1]);
           }
         }
