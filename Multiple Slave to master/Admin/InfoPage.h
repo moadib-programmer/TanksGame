@@ -110,17 +110,23 @@ String playerFormMid = R"(" placeholder="Player )";
 String playerFormEnd = R"(" required>
 )";
 
+// --- Single Input (when target_soft_config == false) ---
 String targetInputStart = R"(
-                <div class="target-input">
-                    <label>Target )";
-String targetInputMid = R"(</label>
-                    <input type="number" name="target)";
-String targetInputSoft = R"(SoftScore" placeholder="Soft Hit Score" required>
-                    <input type="number" name="target)";
-String targetInputHard = R"(HardScore" placeholder="Hard Hit Score" required>
-                </div>
-)";
+    <input type="number" name="target)";
+String targetInputMid = R"(Score" placeholder="Enter Target )";
 String targetInputEnd = R"( Score to be minus" required>
+)";
+
+// --- Dual Inputs (when target_soft_config == true) ---
+String targetInputStartSoftHard = R"(
+    <div class="target-input">
+        <label>Target )";
+String targetInputMidSoft = R"(</label>
+        <input type="number" name="target)";
+String targetInputSoft = R"(SoftScore" placeholder="Soft Hit Score" required>
+        <input type="number" name="target)";
+String targetInputHard = R"(HardScore" placeholder="Hard Hit Score" required>
+    </div>
 )";
 
 #endif

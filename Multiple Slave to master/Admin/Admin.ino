@@ -47,11 +47,13 @@ uint8_t teamNum = 0;     //Number of Teams
 uint8_t hitScore = 0;    // Score subtracted when target gets a HIT
 uint8_t targetNum = 0;   // number of targets per player
 int totalScore = 0;  //Total score of the Game
+bool target_soft_config = false; // variable to save soft/hard or only hard hit choice.
 
 /* Array to store the data of the teams, players and targets */
 String teamsNameArr[MAX_TEAMS] = {};
 String playerNamesArr[MAX_TEAMS][MAX_PLAYERS] = {};
-String targetScoresArr[MAX_TEAMS][MAX_PLAYERS][MAX_TARGETS] = {};
+String targetScoresArrHard[MAX_TEAMS][MAX_PLAYERS][MAX_TARGETS] = {};
+String targetScoresArrSoft[MAX_TEAMS][MAX_PLAYERS][MAX_TARGETS] = {};
 int teamsScoresArr[MAX_TEAMS][MAX_PLAYERS] = {0};
 
 /* If players will have different scores as well */
@@ -78,7 +80,9 @@ struct StructureOfTeam
   uint8_t tank_id = 0;
   uint8_t team_id = 0;
   uint8_t target_num = 0;
-  uint8_t targetScores[MAX_TARGETS] = {0};
+  uint8_t target_soft_config_flag = 0;
+  uint8_t targetSoftScores[MAX_TARGETS] = {0};
+  uint8_t targetHardScores[MAX_TARGETS] = {0};
 };
 
 StructureOfTeam TeamData;
@@ -124,12 +128,32 @@ void sendDataToBrains()
   
       Serial.println("*** Sending Data to the brain of team ID: "+ String(TeamData.team_id) + " and Tank ID" + String(TeamData.tank_id ) + " of team " + teamsNameArr[team - 1]  + "******");
 
-      /* Extracting and populating Target Scores to be minus */
-      for(int target = 1; target <= targetNum; target++)
+      /* TODO: Extracting and populating Target Scores to be minus */
+
+      TeamData.target_soft_config_flag = target_soft_config;
+      
+      if(target_soft_config)
       {
-        /* Extracting player names */
-        TeamData.targetScores[target - 1] = targetScoresArr[team - 1][player - 1][target - 1].toInt();
-        Serial.println("Target " + String(target) + " score: " + TeamData.targetScores[target - 1]);
+        for(int target = 1; target <= targetNum; target++)
+        {
+          /* Extracting target soft scores */
+          TeamData.targetSoftScores[target - 1] = targetScoresArrSoft[team - 1][player - 1][target - 1].toInt();
+          Serial.println("Target " + String(target) + " score: " + TeamData.targetSoftScores[target - 1]);
+          
+          /* Extracting target hard scores */
+          TeamData.targetHardScores[target - 1] = targetScoresArrHard[team - 1][player - 1][target - 1].toInt();
+          Serial.println("Target " + String(target) + " score: " + TeamData.targetHardScores[target - 1]);
+        }
+
+      }
+      else
+      {
+        for(int target = 1; target <= targetNum; target++)
+        {
+          /* Extracting target number */
+          TeamData.targetHardScores[target - 1] = targetScoresArrHard[team - 1][player - 1][target - 1].toInt();
+          Serial.println("Target " + String(target) + " score: " + TeamData.targetHardScores[target - 1]);
+        }
       }
 
       radio.write(&TeamData, sizeof(StructureOfTeam));
@@ -159,8 +183,6 @@ void handleNew()
 
 void handleTeamData() 
 {
-  bool target_soft_config = false; // variable to save soft/hard or only hard hit choice.
-
   if (server.hasArg("targetNum")) 
   {
     targetNum = server.arg("targetNum").toInt();
@@ -222,9 +244,9 @@ void handleTeamData()
         if (target_soft_config) 
         {
           // --- Soft + Hard Inputs ---
-          htmlContent += targetInputStart;  
+          htmlContent += targetInputStartSoftHard;  
           htmlContent += String(target);
-          htmlContent += targetInputMid;  
+          htmlContent += targetInputMidSoft;  
           htmlContent += String(team) + String(player) + String(target);  
           htmlContent += targetInputSoft;  
           htmlContent += String(team) + String(player) + String(target);  
@@ -278,12 +300,30 @@ void handleTankData()
       /* Extracting and populating Target minus Scores */
       for(int target = 1; target <= targetNum; target++)
       {
-        /* Extracting player names */
-        if(server.hasArg("target" + String(team) + String(player) + String(target) + "Score") )
+        if(target_soft_config)
         {
-          targetScoresArr[team - 1][player - 1][target - 1] = server.arg("target" + String(team) + String(player) + String(target) + "Score");
-          Serial.println("Target of team " + String(team) + " and player " + String(player) + "and target " + String(target) + ", score to be minus is: ");
-          Serial.println(targetScoresArr[team - 1][player - 1][target - 1]);
+          if(server.hasArg("target" + String(team) + String(player) + String(target) + "SoftScore") )
+          {
+            targetScoresArrSoft[team - 1][player - 1][target - 1] = server.arg("target" + String(team) + String(player) + String(target) + "SoftScore");
+            Serial.println("Target of team " + String(team) + " and player " + String(player) + "and target  " + String(target) + ", Soft score to be minus is: ");
+            Serial.println(targetScoresArrSoft[team - 1][player - 1][target - 1]);
+          }
+          if(server.hasArg("target" + String(team) + String(player) + String(target) + "HardScore") )
+          {
+            targetScoresArrHard[team - 1][player - 1][target - 1] = server.arg("target" + String(team) + String(player) + String(target) + "HardScore");
+            Serial.println("Target of team " + String(team) + " and player " + String(player) + "and target " + String(target) + ", Hard score to be minus is: ");
+            Serial.println(targetScoresArrHard[team - 1][player - 1][target - 1]);
+          }
+        }
+        else
+        {
+          /* Extracting target scores */
+          if(server.hasArg("target" + String(team) + String(player) + String(target) + "Score") )
+          {
+            targetScoresArrHard[team - 1][player - 1][target - 1] = server.arg("target" + String(team) + String(player) + String(target) + "Score");
+            Serial.println("Target of team " + String(team) + " and player " + String(player) + "and target " + String(target) + ", score to be minus is: ");
+            Serial.println(targetScoresArrHard[team - 1][player - 1][target - 1]);
+          }
         }
       }
     }
