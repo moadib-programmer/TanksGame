@@ -133,6 +133,18 @@ String teamPage = R"(
         </div>
         <br>
 
+        <!-- 🔹 New Section: Ask about target configuration -->
+
+        <label style="font-size: 20px;">Do you want target configuration for soft hit?</label>
+        <div>
+            <input type="radio" id="configNo" name="targetConfig" value="no" checked>
+            <label for="configNo">No</label>
+
+            <input type="radio" id="configYes" name="targetConfig" value="yes">
+            <label for="configYes">Yes</label>
+        </div>
+        <br>
+
         <div  id="submitButton">
             <input class="button" style="background-color:  black;" type="submit" value="Send">
         </div>

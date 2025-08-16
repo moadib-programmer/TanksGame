@@ -159,6 +159,8 @@ void handleNew()
 
 void handleTeamData() 
 {
+  bool target_soft_config = false; // variable to save soft/hard or only hard hit choice.
+
   if (server.hasArg("targetNum")) 
   {
     targetNum = server.arg("targetNum").toInt();
@@ -188,31 +190,60 @@ void handleTeamData()
     gameTime = server.arg("time").toInt();
     Serial.print("GameTime received: ");
     Serial.println(gameTime);
-  }  
+  }
+
+  if (server.hasArg("targetConfig")) 
+  {
+    String targetConfigChoice = server.arg("targetConfig");
+    Serial.print("Target Config Option: ");
+    Serial.println(targetConfigChoice);
+
+    if (targetConfigChoice == "yes") 
+    {
+      Serial.println("He said Yes!");
+      target_soft_config = true;
+    }
+  }
+
 
   /* new logic implementation */
-    String htmlContent = htmlHeader;
+  String htmlContent = htmlHeader;
 
-    for (int team = 1; team <= teamNum; team++) 
+  for (int team = 1; team <= teamNum; team++) 
+  {
+    htmlContent += teamFormStart + team + teamFormMid + team + teamFormEnd + team + teamFormEnd2;
+
+    for (int player = 1; player <= tankNum; player++) 
     {
-        htmlContent += teamFormStart + team + teamFormMid + team + teamFormEnd + team + teamFormEnd2;
+      htmlContent += playerFormStart + team + String(player) + playerFormMid + player + playerFormEnd;
 
-        for (int player = 1; player <= tankNum; player++) 
+      for (int target = 1; target <= targetNum; target++) 
+      {
+        if (target_soft_config) 
         {
-          htmlContent += playerFormStart + team + String(player) + playerFormMid + player + playerFormEnd;
-
-          for (int target = 1; target <= targetNum; target++) 
-          {
-              htmlContent += targetInputStart + team + String(player) + String(target) + targetInputMid + target + targetInputEnd;
-          }
+          // --- Soft + Hard Inputs ---
+          htmlContent += targetInputStart;  
+          htmlContent += String(target);
+          htmlContent += targetInputMid;  
+          htmlContent += String(team) + String(player) + String(target);  
+          htmlContent += targetInputSoft;  
+          htmlContent += String(team) + String(player) + String(target);  
+          htmlContent += targetInputHard;  
         }
-        htmlContent += "</div>"; // Close the form-block div
+        else 
+        {
+          // --- Single Input ---
+          htmlContent += targetInputStart + team + String(player) + String(target) + targetInputMid + target + targetInputEnd;
+        }
+      }
     }
+  }
+
+    htmlContent += "</div>"; // Close the form-block div
 
     htmlContent += htmlFooter;
 
   server.send(200, "text/html", htmlContent);
-
 }
 
 void handleTankData() 
