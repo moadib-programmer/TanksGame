@@ -19,6 +19,7 @@
 #include "HTML.h"
 #include "WelcomePage.h"
 #include "InfoPage.h"
+#include <DNSServer.h>
 
 /***************************** Macros ****************************/
 
@@ -33,11 +34,13 @@
 #define NRF_ADDRS       0xF0F0F0F0E1LL
 #define SSID            "Network"         //replace with your netwrok SSID
 #define PASSWORD        "PASSWORD"     //replace with your netwrok Password
+#define DNS_PORT         53
 
 
 /***************************** Globals ****************************/
 RF24 radio(4, 5); 
 WebServer server(80);
+DNSServer dnsServer;
 uint8_t statusSave = 0u;
 uint8_t statusScore = 0u;
 
@@ -398,6 +401,9 @@ void setup()
   Serial.print("AP IP address: ");
   Serial.println(IP);
 
+  // Start DNS server (redirect all domains to ESP32 IP)
+  dnsServer.start(DNS_PORT, "*", IP);
+
   /* Turning Green LED ON for a time */
   digitalWrite(GREEN_LED, 1);
   delay(2000);
@@ -448,6 +454,7 @@ void loop()
   delay(5);
 
   server.handleClient();
+  dnsServer.processNextRequest();
 
   if(recvData())
   {
@@ -463,6 +470,8 @@ void loop()
 
     Serial.println("Tank ID = ");
     Serial.print(BrainData.tank_id);
+
+    
 
     totalScore = BrainData.health;
 
