@@ -25,11 +25,11 @@
 
 #define BUTTON_PIN      12
 #define MAX_TEAMS       20
-#define MAX_TARGETS     5
+#define MAX_TARGETS     3
 #define MAX_PLAYERS     10
-#define VOLT_PIN        39
-#define RED_LED         34
-#define GREEN_LED       35
+#define VOLT_PIN        34
+#define RED_LED         27
+#define GREEN_LED       26
 
 #define NRF_ADDRS       0xF0F0F0F0E1LL
 #define SSID            "Network"         //replace with your netwrok SSID
@@ -43,6 +43,9 @@ WebServer server(80);
 DNSServer dnsServer;
 uint8_t statusSave = 0u;
 uint8_t statusScore = 0u;
+unsigned long StartTime = 0;
+unsigned long TimeLeft = 0;
+uint8_t startFlag = 0;
 
 uint16_t gameTime = 0;
 uint8_t tankNum = 0;
@@ -77,7 +80,7 @@ double volt_measure()
 struct StructureOfTeam
 {
   String team_name;
-  int health;
+  uint8_t health;
   uint8_t go = 0;
   uint8_t time = 0;
   uint8_t tank_id = 0;
@@ -147,7 +150,6 @@ void sendDataToBrains()
           TeamData.targetHardScores[target - 1] = targetScoresArrHard[team - 1][player - 1][target - 1].toInt();
           Serial.println("Target " + String(target) + " Hard score: " + TeamData.targetHardScores[target - 1]);
         }
-
       }
       else
       {
@@ -162,9 +164,9 @@ void sendDataToBrains()
       radio.write(&TeamData, sizeof(StructureOfTeam));
 
       Serial.println("The data being sent is as follows: ");
-      Serial.println("Team Name & Tank Name: " + TeamData.team_name);
+      Serial.println("Team & Tank Name: " + TeamData.team_name);
       Serial.println("Target Numbers are: " + TeamData.target_num);
-      
+      delay(1);
     }
   }
 
@@ -241,6 +243,9 @@ void handleTeamData()
     for (int player = 1; player <= tankNum; player++) 
     {
       htmlContent += playerFormStart + team + String(player) + playerFormMid + player + playerFormEnd;
+      teamsScoresArr[team - 1][player - 1] = totalScore;
+
+      Serial.println("Team Score : " + String(totalScore));
 
       for (int target = 1; target <= targetNum; target++) 
       {
@@ -338,53 +343,139 @@ void handleTankData()
   server.send(200, "text/html", html + html2+  startPage);
 }
 
-void handleStart() 
+void handleStart()
 {
-    static int startFlag = 0;
+  int minute = 0;
+  int seconds = 0;
 
-    Serial.println("Game is being started");
+  if (((millis() - StartTime) / 1000) <= ((gameTime * 60) ))                              // Comparing the time in seconds with seconds ( 5 sec were added for 3 second additional timer in brain as well as the delya in sending)
+  {
+    TimeLeft =  ((gameTime * 60) )  - ((millis() - StartTime) / 1000);
+    minute = (int) TimeLeft / 60;
+    seconds = TimeLeft - (minute * 60);
 
-    String htmlContent = htmlHeaderResult;
-    htmlContent += "<h2>Game Time: " + String(gameTime) + "</h2>";
+    Serial.println("Minues and Seconds: " + String(minute) + " " + String(seconds));
+  }
 
-    for (int team = 0; team < teamNum; team++) 
-    {
-        htmlContent += "<div class=\"team\">";
-        htmlContent += "<h3>" + teamsNameArr[team] + "</h3>";
+  String htmlContent = htmlHeaderResult;
+  htmlContent += "<h2>Game Time: " + String(minute);
 
-        for (int player = 0; player < tankNum; player++) 
-        {
-          htmlContent += "<div class=\"player\">";
-          htmlContent += "<span>" + playerNamesArr[team][player] + "</span>";
+  if(seconds < 10)
+  {
+    htmlContent+= " : 0" + String(seconds) + "</h2>";
+  } 
+  else
+  {
+    htmlContent+= " : " + String(seconds) +"</h2>";
+  }
 
-          /**
-           * TODO: add the logic for multiple scores with teams here.
-           * Make an array teamsScore[team][tank], and then update the array in the main loop
-           *      when the target is hit and updated score is shared.
-           * 
-          */
-          htmlContent += "<span>Total Score: " + String(teamsScoresArr[team][player]) + "</span>";
+  htmlContent += "<form action=\"/reset\" method=\"GET\">";
+  htmlContent += "<button type=\"submit\" style=\""
+                "background-color:#e74c3c;"
+                "color:white;"
+                "border:none;"
+                "padding:10px 20px;"
+                "border-radius:5px;"
+                "font-size:16px;"
+                "cursor:pointer;"
+                "display:block;"
+                "margin:0 auto;"
+                "\">RESET</button>";
+  htmlContent += "</form>";
 
-          /* TODO: Add the logic for batteries of the targets here */
-          htmlContent += "<span>Battery: 100% </span>";
-          htmlContent += "</div>";
-        }
+  for (int team = 0; team < teamNum; team++) 
+  {
+      htmlContent += "<div class=\"team\">";
+      htmlContent += "<h3>" + teamsNameArr[team] + "</h3>";
 
-        htmlContent += "</div>"; // Close team div
-    }
+      for (int player = 0; player < tankNum; player++) 
+      {
+        htmlContent += "<div class=\"player\">";
+        htmlContent += "<span>" + playerNamesArr[team][player] + "</span>";
 
-    // htmlContent += "<h2>Total Game Score: " + String(totalScore) + "</h2>";
-    htmlContent += htmlFooterResult;
+        /**
+          * TODO: add the logic for multiple scores with teams here.
+          * Make an array teamsScore[team][tank], and then update the array in the main loop
+          *      when the target is hit and updated score is shared.
+          * 
+        */
+        htmlContent += "<span>Total Score: " + String(teamsScoresArr[team][player]) + "</span>";
 
-    // Send the generated HTML to the client
-    server.send(200, "text/html", htmlContent);
+        /* TODO: Add the logic for batteries of the targets here */
+        htmlContent += "<span>Battery: 100% </span>";
+        htmlContent += "</div>";
+      }
 
-    if(startFlag == 0)
-    {
-      SendTheData();
-      startFlag = 1;
-    }
+      htmlContent += "</div>"; // Close team div
+  }
 
+  // htmlContent += "<h2>Total Game Score: " + String(totalScore) + "</h2>";
+  htmlContent += htmlFooterResult;
+
+  // Send the generated HTML to the client
+  server.send(200, "text/html", htmlContent);
+
+  if(startFlag == 0)
+  {
+    SendTheData();
+    delay(2500);
+    StartTime = millis();
+    startFlag = 1;
+  }
+}
+
+void handleReset()
+{
+  radio.openWritingPipe(NRF_ADDRS); 
+  radio.setPALevel(RF24_PA_MIN);
+  radio.stopListening();
+  Serial.println("Transmitter started....");
+
+  delay(100);
+
+  Serial.println("RESET command received from web page");
+
+  TeamData.go = 2;
+  radio.write(&TeamData, sizeof(StructureOfTeam));
+  delay(10);
+  radio.write(&TeamData, sizeof(StructureOfTeam));
+  delay(10);
+  radio.write(&TeamData, sizeof(StructureOfTeam));
+  radio.write(&TeamData, sizeof(StructureOfTeam));
+  delay(10);
+  radio.write(&TeamData, sizeof(StructureOfTeam));
+  delay(10);
+  radio.write(&TeamData, sizeof(StructureOfTeam));
+  radio.write(&TeamData, sizeof(StructureOfTeam));
+  delay(10);
+  radio.write(&TeamData, sizeof(StructureOfTeam));
+  delay(10);
+  radio.write(&TeamData, sizeof(StructureOfTeam));
+
+  server.send(200, "text/html", "<h1>Game Reset!</h1><p>The game has been reset.</p><a href=\"/\">Go Back</a>");
+  delay(3000);
+
+  
+  // or if you just want to reboot the MCU:
+  ESP.restart();
+}
+
+void handleNotFound() 
+{
+  String url = server.uri();
+  String host = server.hostHeader();
+
+  // Ignore favicon requests (optional)
+  if (url == "/favicon.ico") {
+    server.send(404, "text/plain", "");
+    return;
+  }
+
+  // Always redirect unknown hosts/URLs to captive root
+  server.sendHeader("Location", String("http://") + WiFi.softAPIP().toString() + "/", true);
+  server.send(302, "text/plain", "");
+  
+  Serial.println("Redirected: Host=" + host + " URL=" + url);
 }
 
 void setup() 
@@ -393,16 +484,29 @@ void setup()
   pinMode(BUTTON_PIN, INPUT);
   pinMode(GREEN_LED, OUTPUT);
 
-  /* Setting up the access point */
-  Serial.print("Setting AP (Access Point)…");
+  // Ensure AP mode
+  WiFi.mode(WIFI_AP);
+  IPAddress apIP(192,168,4,1);
+  IPAddress gateway(192,168,4,1);
+  IPAddress subnet(255,255,255,0);
+
+  if(!WiFi.softAPIP()) 
+  {
+    Serial.println("softAPConfig failed!");
+  }
+
+  Serial.print("Setting AP (Access Point)… ");
   WiFi.softAP(SSID, PASSWORD);
+  delay(100); // small pause for AP to start
 
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(IP);
 
-  // Start DNS server (redirect all domains to ESP32 IP)
+  // Start DNS server: respond to ALL domains with the AP IP to force captive portal
+  // The wildcard "*" is accepted by DNSServer to match any host.
   dnsServer.start(DNS_PORT, "*", IP);
+  Serial.println("DNS server started, redirecting all queries to AP IP.");
 
   /* Turning Green LED ON for a time */
   digitalWrite(GREEN_LED, 1);
@@ -430,9 +534,11 @@ server.on("/teamData", HTTP_POST, handleTeamData);
 server.on("/tankData", HTTP_POST, handleTankData);
 server.on("/start", HTTP_GET, handleStart);
 server.on("/start", HTTP_POST, handleStart);
+server.on("/reset", HTTP_GET, handleReset);
+server.on("/reset", HTTP_POST, handleReset);
 
 /* TODO: Add the RESET command here, TeamData.go = 2 is the reset command */
-
+server.onNotFound(handleNotFound);
 server.begin();
 
 }

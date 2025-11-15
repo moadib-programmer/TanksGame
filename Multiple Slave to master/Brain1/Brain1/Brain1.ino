@@ -54,7 +54,7 @@ RF24 radio(4, 5);
 struct StructureOfTeam
 {
   String team_name;
-  int health;
+  uint8_t health;
   uint8_t go = 0;
   uint8_t time = 0;
   uint8_t tank_id = 0;
@@ -111,8 +111,15 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 }
 
 // callback function that will be executed when data is received from the target
-void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len) 
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) 
 {
+    radio.openWritingPipe(address); //Setting the address where we will send the data
+  radio.setPALevel(RF24_PA_MIN);  //You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
+  radio.setAutoAck(true);
+  radio.stopListening();          //This sets the module as transmitter
+
+  delay(10);
+
   Serial.println("A target has been HIT");
   
   if(GameEndFlag == 0)
@@ -121,10 +128,10 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
 
     char macStr[18];
     Serial.print("Packet received from Target: ");
-    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-    mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+    // snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+    // mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
     
-    Serial.println(macStr);
+    // Serial.println(macStr);
 
     memcpy(&rcvTargetData, incomingData, sizeof(rcvTargetData));
     Serial.printf("Target board ID %u: %u bytes\n", rcvTargetData.id, len);
@@ -135,7 +142,8 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
       /* soft -> 0, hard -> 1 */
       if(rcvTargetData.soft_hard_flag)
       {
-        score_to_be_minus = scoresToBeMinusHard;
+        Serial.println("Score Hard to be minus " + String(scoresToBeMinusHard[rcvTargetData.id - 1]) + " and Target id is: " + String(rcvTargetData.id));
+        score_to_be_minus = scoresToBeMinusHard;                            // selecting the array to be muinus
         Serial.println("\n Sore to be minus (Hard) from target 1 is : " + String(score_to_be_minus[rcvTargetData.id - 1]));
       }
       else
@@ -143,6 +151,11 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
         score_to_be_minus = scoresToBeMinusSoft;
         Serial.println("\n Sore to be minus (Soft) from target 1 is : " + String(score_to_be_minus[rcvTargetData.id - 1]));
       }
+    }
+    else
+    {
+      score_to_be_minus = scoresToBeMinusHard;
+      Serial.println("\n Sore to be minus (Hard) from target 1 is : " + String(score_to_be_minus[rcvTargetData.id - 1]));
     }
 
     /* Check if new score value is greater than zero or not */
@@ -229,10 +242,19 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *incomingData, int len)
     for(int i = 0; i <= 800; i++)
     {
       audio.loop();
-      delay(10);
+      for (int i = 0; i<= 9; i++)
+      {
+        checkReset();
+        delay(1);
+      }
     }
   }
 
+  radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
+  radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
+  radio.startListening();              //This sets the module as receiver
+
+  delay(10);
 }
 
 void SendNextionCommand(String object, String msg)
@@ -262,6 +284,24 @@ int recvData()
   }
 
   return 0;
+}
+
+void checkReset()
+{
+  if(recvData()) /* Reset command is received */
+  {
+    if(TeamData.go == 2)  // Reset command is go == 2
+    {
+      Serial.printf("Reset Command Received");
+      Final_Score = -129;   // When Final_Score is -129, this is the code for the target to reset.
+
+      esp_err_t result = esp_now_send(targetMACAddress, (uint8_t *) &Final_Score, sizeof(Final_Score));
+      delay(2000);
+
+      /* TODO: Add the Reset command sent to the targets */
+      ESP.restart();
+    }
+  }
 }
 
 void setup() 
@@ -381,19 +421,18 @@ void loop()
           for (int target = 0; target < targetNum; target++)
           {
             scoresToBeMinusSoft[target] = TeamData.targetSoftScores[target];
-            Serial.println("Target " + String(target) + "Soft Score: " + String(scoresToBeMinusSoft[target]));
+            Serial.println("Target " + String(target + 1) + "Soft Score: " + String(scoresToBeMinusSoft[target]));
             
             scoresToBeMinusHard[target] = TeamData.targetHardScores[target];
-            Serial.println("Target " + String(target) + "Hard Score: " + String(scoresToBeMinusHard[target]));
+            Serial.println("Target " + String(target + 1) + "Hard Score: " + String(scoresToBeMinusHard[target]));
           }
-
         }
         else
         {
           for (int target = 0; target < targetNum; target++)
           {
             scoresToBeMinusHard[target] = TeamData.targetHardScores[target];
-            Serial.println("Target " + String(target) + "normal Score: " + String(scoresToBeMinusHard[target]));
+            Serial.println("Target " + String(target + 1) + "normal Score: " + String(scoresToBeMinusHard[target]));
           }
         }
 
@@ -462,11 +501,6 @@ void loop()
 
         digitalWrite(GREEN_LED, HIGH);
 
-        radio.openWritingPipe(address); //Setting the address where we will send the data
-        radio.setPALevel(RF24_PA_MIN);  //You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
-        radio.setAutoAck(true);
-        radio.stopListening();          //This sets the module as transmitter
-
         StartTime = millis();
         Serial.println("Start Time : "+ String(StartTime));
 
@@ -479,14 +513,7 @@ void loop()
 
   if( ((millis() - StartTime) / 1000) <= TotalTime )
   {
-    if(recvData()) /* Reset command is received */
-    {
-      if(TeamData.go == 2)  // Reset command is go == 2
-      {
-        /* TODO: Add the Reset command sent to the targets */
-        ESP.restart();
-      }
-    }
+    checkReset();
 
     int minute = 0;
     int seconds = 0;
@@ -508,7 +535,12 @@ void loop()
     Serial.println("");
     SendNextionCommand("time", String(countdown));
     SendNextionCommand("time", String(countdown));
-    delay(100);
+
+    for (int i = 0; i<= 9; i++)
+    {
+      checkReset();
+      delay(1);
+    }
   }
   else
   {
@@ -523,21 +555,19 @@ void loop()
 
     while(1)
     {
-      digitalWrite(GREEN_LED, HIGH);
-      delay(500);
+      checkReset();
       digitalWrite(GREEN_LED, LOW);
-      delay(500);
+      delay(5);
     }
   }
 
-  if(recvData()) /* Reset command is received */
+  checkReset();
+
+  // delay(500);
+  
+  for (int i = 0; i<= 490; i++)
   {
-    if(TeamData.go == 2)  // Reset command is go == 2
-    {
-      /* TODO: Add the Reset command sent to the targets */
-      ESP.restart();
-    }
+    checkReset();
+    delay(1);
   }
-
-  delay(500);  
 }

@@ -18,7 +18,7 @@ typedef struct StructureOfTargets
 } StructureOfTargets;
 
 
-struct_message myData;
+StructureOfTargets myData;
 
 int healthFrmBrain = 0;
 
@@ -51,9 +51,17 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
  * @return void
  * 
 */
-void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) 
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int data_len)
 {
   memcpy(&healthFrmBrain, incomingData, sizeof(healthFrmBrain));
+
+  if(healthFrmBrain == -129)
+  {
+    Serial.printf("Reset Command Received");
+
+    ESP.restart();
+  }
+  
   Serial.print("health Received from the brain: ");
   Serial.println(healthFrmBrain);
 
@@ -64,29 +72,45 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
   {
     /* Setting neopixel to green */
     Serial.println("\n Sending Green color switching \n");
-    digitalWrite(RED_TARGET_LIGHT, 0);
-    digitalWrite(GREEN_TARGET_LIGHT, 1);
-    digitalWrite(YELLOW_TARGET_LIGHT, 0);
+    digitalWrite(RED_LIGHT_PWR1, 0);
+    digitalWrite(GREEN_LIGHT_PWR4, 1);
+    digitalWrite(YELLOW_LIGHT_PWR2, 0);
   }
   else if ( (healthFrmBrain >= 40) and (healthFrmBrain <= 69) )
   {
     /* Setting neopixel to yellow */
     Serial.println("\n Sending yellow color switching \n");
-    digitalWrite(RED_TARGET_LIGHT, 0);
-    digitalWrite(GREEN_TARGET_LIGHT, 0);
-    digitalWrite(YELLOW_TARGET_LIGHT, 1);
+    digitalWrite(RED_LIGHT_PWR1, 0);
+    digitalWrite(GREEN_LIGHT_PWR4, 0);
+    digitalWrite(YELLOW_LIGHT_PWR2, 1);
   }
   else if ( (healthFrmBrain >= 0) and (healthFrmBrain <= 39) )
   {
     /* Setting neopixel to Red */
     Serial.println("\n Sending yellow Red switching \n");
-    digitalWrite(RED_TARGET_LIGHT, 1);
-    digitalWrite(GREEN_TARGET_LIGHT, 0);
-    digitalWrite(YELLOW_TARGET_LIGHT, 0);
+    digitalWrite(RED_LIGHT_PWR1, 1);
+    digitalWrite(GREEN_LIGHT_PWR4, 0);
+    digitalWrite(YELLOW_LIGHT_PWR2, 0);
   }
 
   Serial.println();
   delay(10);
+}
+
+float measureTemp(void)
+{
+  int adcValue = analogRead(TMP36_PIN);
+
+  // Convert to voltage (ESP32 ADC = 12-bit, 3.3V reference)
+  float voltage = (adcValue / 4095.0) * 3.3;
+
+  // TMP36 output is 10 mV/°C with 500 mV offset at 0°C
+  float temperatureC = ((voltage - 0.5) * 100.0) + 6.0;
+
+  // Serial.print(temperatureC, 1);
+  // Serial.println(" °C");
+
+  return temperatureC;
 }
 
 
@@ -118,19 +142,43 @@ void setup()
   }
 
   pinMode(RED_LED, OUTPUT);
-  digitalWrite(RED_LED, LOW);
   pinMode(GREEN_LED, OUTPUT);
-                                    
-  // pinMode(VOLT_PIN, INPUT);
+  pinMode(OTA_CTRL_PIN, INPUT);
+  pinMode(FAN_CTRL_PIN_PWR3, OUTPUT);
+  pinMode(RED_LIGHT_PWR1, OUTPUT);
+  pinMode(GREEN_LIGHT_PWR4, OUTPUT);
+  pinMode(YELLOW_LIGHT_PWR2, OUTPUT);
+  pinMode(VOLT_PIN, INPUT);
+
+  pinMode(TMP36_EN_PIN, OUTPUT);
+  digitalWrite(TMP36_EN_PIN, HIGH);
 
   /* Turning Green LED ON for 2 seconds */
   digitalWrite(GREEN_LED, 0);
   digitalWrite(RED_LED, 0);
 
+  // digitalWrite(RED_LIGHT_PWR1, 1);
+  // digitalWrite(GREEN_LIGHT_PWR4, 1);
+  // digitalWrite(YELLOW_LIGHT_PWR2, 1);
+  // digitalWrite(FAN_CTRL_PIN_PWR3, 1);
+
   delay(GREEN_ON_TIME_MS);
   
   digitalWrite(GREEN_LED, 1);
   digitalWrite(RED_LED, 1);
+
+  Serial.println("Turning Lights On");
+  digitalWrite(RED_LIGHT_PWR1, 1);
+  digitalWrite(GREEN_LIGHT_PWR4, 1);
+  digitalWrite(YELLOW_LIGHT_PWR2, 1);
+  digitalWrite(FAN_CTRL_PIN_PWR3, 1);
+  
+  delay(3000);
+Serial.println("Turning Lights OFF");
+  digitalWrite(RED_LIGHT_PWR1, 0);
+  digitalWrite(GREEN_LIGHT_PWR4, 0);
+  digitalWrite(YELLOW_LIGHT_PWR2, 0);
+  digitalWrite(FAN_CTRL_PIN_PWR3, 0);
 
   /* Register Datasend and Datarcv callback functions */
   esp_now_register_send_cb(OnDataSent);
@@ -168,10 +216,6 @@ void setup()
 
   Serial.println("******* Initiating the Hit detection ********");
   pinMode(BUTTON_PIN, INPUT_PULLDOWN);
-
-  digitalWrite(RED_TARGET_LIGHT, 0);
-  digitalWrite(GREEN_TARGET_LIGHT, 1);
-  digitalWrite(YELLOW_TARGET_LIGHT, 0);
 }
 
 
@@ -179,20 +223,21 @@ void targetHitCallback()
 {
 
   Serial.println("***** TARGET HIT ****** ");
-  digitalWrite(RED_TARGET_LIGHT, 0);
-  digitalWrite(GREEN_TARGET_LIGHT, 0);
-  digitalWrite(YELLOW_TARGET_LIGHT, 0);
+  digitalWrite(RED_LIGHT_PWR1, 0);
+  digitalWrite(GREEN_LIGHT_PWR4, 0);
+  digitalWrite(YELLOW_LIGHT_PWR2, 0);
 
   /* Flashing the Red LED */
   for (int i = 0; i <= 2; i++)
   {
-    digitalWrite(RED_TARGET_LIGHT, 1);
+    digitalWrite(RED_LIGHT_PWR1, 1);
     delay(500);
-    digitalWrite(RED_TARGET_LIGHT, 0);
+    digitalWrite(RED_LIGHT_PWR1, 0);
     delay(500);
   }
 
   myData.soft_hard_flag = 1; // default hard
+
   /* Send message via ESP-NOW */
   Serial.println("*** Sending the Score now ****");
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));
@@ -215,6 +260,16 @@ void loop()
   {
     /* Callback function for HIT */
     targetHitCallback();
+  }
+  if(digitalRead(OTA_CTRL_PIN) == 0)
+  {
+    Serial.println("OTA button Psed");
+    delay(300);
+  }
+
+  if(measureTemp() > 50)
+  {
+    Serial.println("Turning on the FAN");
   }
 
   delay(10);
